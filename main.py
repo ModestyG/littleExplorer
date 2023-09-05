@@ -34,8 +34,8 @@ class Player:
         self.hasChestOpen = False
         self.currentRoom = Room("Starting Room")
         self.movementSpeed = 3
-        self.xPos = 0
-        self.yPos = 0
+        self.xPos = None
+        self.yPos = None
 
     def loseHealth(self, amount=1):
         self.hp -= amount
@@ -48,11 +48,11 @@ class Player:
 
 def describeRoom():
     clear(mainPage)
-    Label(mainPage, text=plr.currentRoom.desc).pack()
-    Button("Chest", openChest, mainPage).pack()
-    Button("Door 1", buildRoom, mainPage).pack()
-    Button("Door 2", buildRoom, mainPage).pack()
-    Button("Door 3", buildRoom, mainPage).pack()
+    Label(mainPage, text=plr.currentRoom.desc).grid()
+    Button("Chest", openChest, mainPage).grid()
+    Button("Door 1", buildRoom, mainPage).grid()
+    Button("Door 2", buildRoom, mainPage).grid()
+    Button("Door 3", buildRoom, mainPage).grid()
 
 
 def buildRoom():
@@ -65,6 +65,7 @@ def buildRoom():
     if random.randint(0, 999) == 1:
         encounterTrap()
     else:
+        clear(mainPage)
         fight.main(mainPage, plr)
 
 
@@ -72,19 +73,19 @@ def buildRoom():
 
 def encounterTrap():
     clear(mainPage)
-    Label(mainPage, text="You run into a trap and lose 1 health!").pack()
+    Label(mainPage, text="You run into a trap and lose 1 health!").grid()
     plr.loseHealth(1)
-    Button("Continue", describeRoom, mainPage).pack()
+    Button("Continue", describeRoom, mainPage).grid()
 
 
 def fightEnemy():
     enemy = plr.currentRoom.enemy
     attackStrength = plr.strength + plr.weapon.strBonus
     clear(mainPage)
-    Label(mainPage, text=f"You encounter {enemy.article} {enemy.name}!").pack()
+    Label(mainPage, text=f"You encounter {enemy.article} {enemy.name}!").grid()
     if attackStrength > enemy.strength:
         Label(mainPage,
-              text=f"The {enemy.name} is weaker than you and you successfully defeat it!\nLevel up!").pack()
+              text=f"The {enemy.name} is weaker than you and you successfully defeat it!\nLevel up!").grid()
         plr.lv += 1
         updateCharacterPage()
         if plr.lv >= 10:
@@ -92,20 +93,20 @@ def fightEnemy():
 
     elif attackStrength < enemy.strength:
         Label(mainPage,
-              text=f"The {enemy.name} is stronger than you and you are thoroughly thrashed by it!").pack()
+              text=f"The {enemy.name} is stronger than you and you are thoroughly thrashed by it!").grid()
         plr.loseHealth(1)
 
     else:
         Label(mainPage,
-              text=f"You and the {enemy.name} are equally strong and decide to call it a draw.").pack()
+              text=f"You and the {enemy.name} are equally strong and decide to call it a draw.").grid()
 
-    Button("Details", lambda: battleDetails(enemy, attackStrength), mainPage).pack()
-    Button("Continue", describeRoom, mainPage).pack()
+    Button("Details", lambda: battleDetails(enemy, attackStrength), mainPage).grid()
+    Button("Continue", describeRoom, mainPage).grid()
 
 
 def battleDetails(enemy, attackStrength):
     Label(mainPage,
-          text=f"Your total attack power was {attackStrength} while you enemy's was {enemy.strength}.").pack()
+          text=f"Your total attack power was {attackStrength} while you enemy's was {enemy.strength}.").grid()
 
 
 # Inventory/Chest functions
@@ -115,10 +116,10 @@ def openChest():
     clear(mainPage)
     if len(plr.currentRoom.chestContents) > 0:
         for item in plr.currentRoom.chestContents:
-            Button("- " + item.name, lambda i=item: [takeItem(i), openChest()], mainPage).pack()
+            Button("- " + item.name, lambda i=item: [takeItem(i), openChest()], mainPage).grid()
     else:
-        Label(mainPage, "This chest is empty").pack()
-    Button("Back", lambda: [describeRoom(), updateInventoryPage()], mainPage).pack()
+        Label(mainPage, "This chest is empty").grid()
+    Button("Back", lambda: [describeRoom(), updateInventoryPage()], mainPage).grid()
 
 
 def takeItem(item):
@@ -137,11 +138,11 @@ def moveItem(item):
     else:
         clear(inventoryPage)
         Label(inventoryPage, "You don't seem to have a chest open. Do you want to throw away this item? (Note: Items "
-                             "cannot be recovered once thrown away)").pack()
+                             "cannot be recovered once thrown away)").grid()
         f = ttk.Frame(inventoryPage)
-        Button("Yes", lambda: throwItem(item), f).pack()
-        Button("No", lambda: inspectItem(item), f).pack()
-        f.pack()
+        Button("Yes", lambda: throwItem(item), f).grid()
+        Button("No", lambda: inspectItem(item), f).grid()
+        f.grid()
 
 
 def throwItem(item):
@@ -151,12 +152,12 @@ def throwItem(item):
 
 def inspectItem(item):
     clear(inventoryPage)
-    Label(inventoryPage, item.name).pack()
-    Label(inventoryPage, f"Attack bonus: {item.strBonus}").pack()
-    Label(inventoryPage, item.desc).pack()
-    Button("Equip", lambda: [updateInventoryPage(), equipItem(item)], inventoryPage).pack()
-    Button("Put Away", lambda: moveItem(item), inventoryPage).pack()
-    Button("Back", lambda: updateInventoryPage(), inventoryPage).pack()
+    Label(inventoryPage, item.name).grid()
+    Label(inventoryPage, f"Attack bonus: {item.strBonus}").grid()
+    Label(inventoryPage, item.desc).grid()
+    Button("Equip", lambda: [updateInventoryPage(), equipItem(item)], inventoryPage).grid()
+    Button("Put Away", lambda: moveItem(item), inventoryPage).grid()
+    Button("Back", lambda: updateInventoryPage(), inventoryPage).grid()
 
 
 def equipItem(item):
@@ -178,15 +179,15 @@ def updateCharacterPage():
     Weapon: {plr.weapon.name} (+{plr.weapon.strBonus})
     Hp:         {plr.hp}/{plr.maxHP}
     Str:        {plr.strength}
-""", justify=tk.LEFT).pack()
+""", justify=tk.LEFT).grid()
 
 
 def updateInventoryPage():
     clear(inventoryPage)
     plr.hasChestOpen = False
-    Label(inventoryPage, text=f"{len(plr.inv)}/{plr.invSize}").pack()
+    Label(inventoryPage, text=f"{len(plr.inv)}/{plr.invSize}").grid()
     for item in plr.inv:
-        Button(item.name, lambda i=item: inspectItem(i), inventoryPage).pack()
+        Button(item.name, lambda i=item: inspectItem(i), inventoryPage).grid()
 
 
 #   Win and Lose placeholder functions
@@ -195,14 +196,14 @@ def gameOver():
     notebook.hide(mainPage)
     notebook.hide(characterPage)
     notebook.hide(inventoryPage)
-    Label(notebook, text="Game Over").pack()
+    Label(notebook, text="Game Over").grid()
 
 
 def win():
     notebook.hide(mainPage)
     notebook.hide(characterPage)
     notebook.hide(inventoryPage)
-    Label(w, text="You Win!").pack()
+    Label(w, text="You Win!").grid()
 
 
 #   Start

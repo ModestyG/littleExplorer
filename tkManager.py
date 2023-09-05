@@ -57,13 +57,12 @@ def createGameWindow():
 
 def createGameNotebook(frame):
     notebook = ttk.Notebook(frame, width=500, height=500)
-    notebook.pack()
+    notebook.grid()
     return notebook
 
 
 def createNotebookPage(notebook, name):
     page = NotebookPage(notebook)
-    page.pack(fill="both")
     notebook.add(page, text=name)
     return page
 
