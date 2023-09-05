@@ -13,8 +13,8 @@ class Enemy:
         self.name = name
         self.strength = strength
         self.article = article  # The article that precedes the enemy's name (ex: {A} rat approaches you)
-        self.xPos = 0
-        self.yPos = 0
+        self.xPos = None
+        self.yPos = None
         self.movementSpeed = 3
 
 
