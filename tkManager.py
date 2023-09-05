@@ -35,7 +35,7 @@ class NotebookPage(ttk.Frame):
 def createGameWindow():
     w = tk.Tk()
     w.title("Adventure Game")
-    w.geometry("500x500+500+100")
+    #w.geometry("500x500+500+100")
     w.resizable(False, False)
     style = ttk.Style()
     style.theme_use("default")
@@ -56,7 +56,7 @@ def createGameWindow():
 
 
 def createGameNotebook(frame):
-    notebook = ttk.Notebook(frame, width=500, height=500)
+    notebook = ttk.Notebook(frame)
     notebook.grid()
     return notebook
 

@@ -27,8 +27,8 @@ class Player:
         self.lv = lv
         self.inv = []
         self.invSize = 5
-        self.weapon = Weapon("Hand-wraps", 0, "", "Flimsy bandages that protect your fists while boxing. Not very "
-                                                  "useful.")
+        self.weapon = Weapon("Hand-wraps", 0, "", 1, "Flimsy bandages that protect your fists while boxing. Not very "
+                                                     "useful.")
         self.name = name
         self.maxHP = maxHP
         self.hasChestOpen = False
@@ -59,14 +59,16 @@ def buildRoom():
     room = Room(desc=ROOM_DESCRIPTIONS[random.randint(0, len(ROOM_DESCRIPTIONS) - 1)])
     room.enemy = deepcopy(ENEMIES[random.randint(0, len(ENEMIES) - 1)])
     room.chestContents.append(WEAPONS[random.randint(0, len(WEAPONS) - 1)])
-    room.chestContents.append(WEAPONS[random.randint(0, len(WEAPONS) - 1)])
+    room.width = random.randint(3, 20)
+    room.height = random.randint(5, 20)
     plr.currentRoom = room
 
-    if random.randint(0, 999) == 1:
+    if random.randint(0, 5) == 1:
         encounterTrap()
     else:
         clear(mainPage)
-        fight.main(mainPage, plr)
+        backButton = Button("Continue", describeRoom, mainPage)
+        fight.main(mainPage, backButton, plr)
 
 
 # Fight functions
@@ -210,7 +212,7 @@ def win():
 
 def debug():
     plr.currentRoom.chestContents.append(
-        Weapon("Ultra Mega Cheater Sword", 100, "a", "This sword is only to be wielded by cheaters and debuggers")
+        Weapon("Ultra Mega Cheater Sword", 100, "a", 4, "This sword is only to be wielded by cheaters and debuggers")
     )
 
 

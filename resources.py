@@ -7,8 +7,9 @@ ENEMIES = [
 ]
 
 WEAPONS = [
-    Weapon("Dagger", 1, "a", "A small but sharp dagger."),
-    Weapon("Sword", 3, "a", "A large sword to swing at your enemies."),
+    Weapon("Dagger", 1, "a", 1.5, "A small but sharp dagger."),
+    Weapon("Sword", 3, "a", 2, "A large sword to swing at your enemies."),
+    Weapon("Bow", 3, "a", 8, "A basic bow.")
 ]
 
 ROOM_DESCRIPTIONS = [

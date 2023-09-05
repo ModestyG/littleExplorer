@@ -16,11 +16,13 @@ class Enemy:
         self.xPos = None
         self.yPos = None
         self.movementSpeed = 3
+        self.health = 5
 
 
 class Weapon:
-    def __init__(self, name, strBonus, article, desc=""):
+    def __init__(self, name, strBonus, article, reach=1, desc=""):
         self.name = name
         self.strBonus = strBonus
         self.article = article  # The article that precedes the weapon's name (ex: You found {a} dagger)
         self.desc = desc
+        self.reach = reach
