@@ -1,7 +1,7 @@
 # Adventure game about a travelling artificer
 
-from copy import deepcopy
 import random
+from copy import deepcopy
 
 import fight
 import resources
@@ -9,7 +9,7 @@ from gameClasses import *
 from tkManager import *
 
 w = createGameWindow()
-w.geometry("700x450")
+
 notebook = createGameNotebook(w)
 mainPage = createNotebookPage(notebook, " Main ")
 characterPage = createNotebookPage(notebook, " Character ")
@@ -29,7 +29,7 @@ class Player:
         self.inv = []
         self.invSize = 5
         self.weapon = Weapon("Hand-wraps", 0, "", 1, "Flimsy bandages that protect your fists while boxing. Not very "
-                                                         "useful.")
+                                                     "useful.")
         self.name = name
         self.maxHP = maxHP
         self.hasChestOpen = False
@@ -212,9 +212,8 @@ def win():
 #   Start
 
 def debug():
-    plr.currentRoom.chestContents.append(
-        Weapon("Ultra Mega Cheater Sword", 9999, "a", 5, "This sword is only to be wielded by cheaters and debuggers")
-    )
+    plr.weapon = Weapon("Ultra Mega Cheater Sword", 9999, "a", 8, "This sword is only to be wielded by cheaters and debuggers")
+    plr.movementSpeed = 10
 
 
 def main():
