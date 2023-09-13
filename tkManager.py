@@ -70,3 +70,6 @@ def createNotebookPage(notebook, name):
 def clear(frame):
     for i in frame.winfo_children():
         i.destroy()
+
+def error(text):
+    print(f"\033[91m{text}\033[0m")

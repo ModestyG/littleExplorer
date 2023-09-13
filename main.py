@@ -9,6 +9,7 @@ from gameClasses import *
 from tkManager import *
 
 w = createGameWindow()
+w.geometry("700x450")
 notebook = createGameNotebook(w)
 mainPage = createNotebookPage(notebook, " Main ")
 characterPage = createNotebookPage(notebook, " Character ")
@@ -28,12 +29,12 @@ class Player:
         self.inv = []
         self.invSize = 5
         self.weapon = Weapon("Hand-wraps", 0, "", 1, "Flimsy bandages that protect your fists while boxing. Not very "
-                                                     "useful.")
+                                                         "useful.")
         self.name = name
         self.maxHP = maxHP
         self.hasChestOpen = False
         self.currentRoom = Room("Starting Room")
-        self.movementSpeed = 3
+        self.movementSpeed = 3.5
         self.xPos = None
         self.yPos = None
 
@@ -59,15 +60,15 @@ def buildRoom():
     room = Room(desc=ROOM_DESCRIPTIONS[random.randint(0, len(ROOM_DESCRIPTIONS) - 1)])
     room.enemy = deepcopy(ENEMIES[random.randint(0, len(ENEMIES) - 1)])
     room.chestContents.append(WEAPONS[random.randint(0, len(WEAPONS) - 1)])
-    room.width = random.randint(3, 20)
-    room.height = random.randint(5, 20)
+    room.width = random.randint(3, 15)
+    room.height = random.randint(5, 15)
     plr.currentRoom = room
 
     if random.randint(0, 5) == 1:
         encounterTrap()
     else:
         clear(mainPage)
-        backButton = Button("Continue", describeRoom, mainPage)
+        backButton = ("Continue", describeRoom)
         fight.main(mainPage, backButton, plr)
 
 
@@ -212,7 +213,7 @@ def win():
 
 def debug():
     plr.currentRoom.chestContents.append(
-        Weapon("Ultra Mega Cheater Sword", 100, "a", 4, "This sword is only to be wielded by cheaters and debuggers")
+        Weapon("Ultra Mega Cheater Sword", 9999, "a", 5, "This sword is only to be wielded by cheaters and debuggers")
     )
 
 

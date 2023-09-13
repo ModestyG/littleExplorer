@@ -1,9 +1,9 @@
 from gameClasses import*
 ENEMIES = [
-    Enemy("Spider", 1, "a"),
-    Enemy("Rat", 1, "a"),
-    Enemy("Goblin", 2, "a"),
-    Enemy("Dragon", 100, "a")
+    Enemy("Spider", 1, "a", 1),
+    Enemy("Rat", 1, "a", 2),
+    Enemy("Goblin", 2, "a", 5),
+    Enemy("Dragon", 100, "a", 500)
 ]
 
 WEAPONS = [

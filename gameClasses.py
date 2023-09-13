@@ -9,14 +9,14 @@ class Room:
 
 
 class Enemy:
-    def __init__(self, name, strength, article):
+    def __init__(self, name, strength, article, health):
         self.name = name
         self.strength = strength
         self.article = article  # The article that precedes the enemy's name (ex: {A} rat approaches you)
         self.xPos = None
         self.yPos = None
         self.movementSpeed = 3
-        self.health = 5
+        self.health = health
 
 
 class Weapon:

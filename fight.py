@@ -6,12 +6,61 @@ import numpy as np
 from tkManager import *
 
 
-# Types of cells:
-#   - Player
-#   - Enemy
-#   - Wall
-#   - Walkable
-#   - Free
+class Fight:
+    def __init__(self, frame, backCommand, plr):
+        self.frame = frame
+        self.backButtonArgs = backCommand
+        self.grid = []
+        self.plr = plr
+        self.room = plr.currentRoom
+        self.enemy = self.room.enemy
+        self.log = tk.Text(frame, height=1.5 * self.room.height, width=40, state="disabled")
+        self.actionButtonFrame = ttk.Frame(frame)
+        self.state = "starting"
+
+    #       Possible battle states:
+    #          - "starting"     -> The fight is setting up
+    #          - "playerTurn"   -> It's the player's turn and they are not in the middle of an action (all actions should be enabled)
+    #          - "playerMoving" -> It's the player's turn and they are choosing where to move (only cancel move should be enabled)
+    #          - "playerAiming" -> It's the player's turn and they are choosing where to aim (only cancel attack should be enabled)
+    #          - "enemyTurn"    -> It's the player's turn (no actions should be enabled)
+    #          - "battleWon"    -> The battle is won and only the continue button should be visible
+
+    def setup(self):
+        gridFrame = ttk.Frame(self.frame)
+        gridFrame.grid()
+        self.grid = createGrid(self.room, gridFrame)
+        self.log.grid(column=1, row=0)
+        self.actionButtonFrame.grid(column=0, row=self.room.height, columnspan=2)
+        self.backButtonArgs += (self.actionButtonFrame,)
+        self.state = "playerTurn"
+
+    def updateActionButtons(self, newState=None):
+        if newState is not None:
+            self.state = newState
+        state = self.state
+        clear(self.actionButtonFrame)
+        if state == "starting":
+            pass
+        elif state == "playerTurn":
+            attackButton = Button("Attack", lambda: [showAttackSquares(self, self.actionButtonFrame, attackButton)],
+                                  self.actionButtonFrame)
+            attackButton.grid(column=0, row=0, padx=1)
+            Button("Move", lambda: [moveAction(self)], self.actionButtonFrame).grid(column=1, row=0, padx=1)
+        elif state == "playerMoving":
+            Button("Cancel Move", lambda: [cancelMove(self, getCellsInReach(self, self.plr.movementSpeed, self.plr.xPos,
+                                                                            self.plr.yPos, "walkable"))], self.actionButtonFrame).grid()
+        elif state == "playerAiming":
+            Button("Cancel Attack", lambda: [cancelAttack(self)], self.actionButtonFrame).grid()
+        elif state == "enemyTurn":
+            moveEnemy(self)
+            self.state = "playerTurn"
+            self.updateActionButtons()
+        elif state == "battleWon":
+            Button(*self.backButtonArgs).grid()
+        else:
+            error(f"Error: Battle state ({state}) does not exist")
+
 
 class GridButton(tk.Button):
 
@@ -50,16 +99,12 @@ class GridButton(tk.Button):
 
 
 def main(frame, backButton, plr):
-    room = plr.currentRoom
-    enemy = room.enemy
-    gridFrame = ttk.Frame(frame)
-    gridFrame.grid()
-    grid = createGrid(room, gridFrame)
-    movePlayer(grid, plr, room.width-1, room.height-1)
-    moveEnemy(grid, plr, enemy)
-    log = tk.Text(frame, height=1.5*room.height, width=40, state="disabled")
-    log.grid(column=1, row=0)
-    showActionButtons(frame, backButton, grid, room, plr, log, enemy)
+    fight = Fight(frame, backButton, plr)
+    fight.setup()
+    movePlayer(fight, fight.room.width - 1, fight.room.height - 1)
+    moveEnemy(fight)
+    fight.updateActionButtons()
+
 
 def createGrid(room, frame):
     grid = []
@@ -73,7 +118,13 @@ def createGrid(room, frame):
     return grid
 
 
-def movePlayer(grid, plr, x, y):
+def enemyTurn():
+    pass
+
+
+def movePlayer(fight, x, y):
+    grid = fight.grid
+    plr = fight.plr
     if plr.xPos is not None:
         grid[plr.xPos][plr.yPos].setColor("white")
         grid[plr.xPos][plr.yPos].setCommand(None)
@@ -82,18 +133,26 @@ def movePlayer(grid, plr, x, y):
     plr.xPos = x
     plr.yPos = y
     grid[x][y].setColor("blue")
-    grid[x][y].setCommand(lambda: moveAction(grid, plr.currentRoom, plr))
+    grid[x][y].setCommand(lambda: moveAction(fight))
     grid[x][y].states["walkable"] = False
     grid[x][y].append(plr)
 
-def moveAction(grid, room, plr):
-    cellsInReach = getCellsInReach(grid, room, plr.movementSpeed, plr.xPos, plr.yPos, "walkable")
-    grid[plr.xPos][plr.yPos].setCommand(lambda: cancelMove(grid, plr, cellsInReach))
+
+def moveAction(fight):
+    fight.updateActionButtons("playerMoving")
+    grid = fight.grid
+    room = fight.room
+    plr = fight.plr
+    cellsInReach = getCellsInReach(fight, plr.movementSpeed, plr.xPos, plr.yPos, "walkable")
+    grid[plr.xPos][plr.yPos].setCommand(lambda: cancelMove(fight, cellsInReach))
     for cell in cellsInReach:
         cell.setColor("red")
-        cell.setCommand(lambda x=cell.x, y=cell.y: [cancelMove(grid, plr, cellsInReach), movePlayer(grid, plr, x, y)])
+        cell.setCommand(lambda x=cell.x, y=cell.y: [cancelMove(fight, cellsInReach), movePlayer(fight, x, y)])
 
-def getCellsInReach(grid, room, reach, xStart, yStart, requirement=""):
+
+def getCellsInReach(fight, reach, xStart, yStart, requirement=""):
+    grid = fight.grid
+    room = fight.room
     cells = []
     for column in grid[np.clip(xStart - math.ceil(reach), 0, None):np.clip(xStart + math.ceil(reach) + 1, None, room.width)]:
         for cell in column[np.clip(yStart - math.ceil(reach), 0, None):np.clip(yStart + math.ceil(reach) + 1, None, room.height)]:
@@ -101,19 +160,38 @@ def getCellsInReach(grid, room, reach, xStart, yStart, requirement=""):
                 cells.append(cell)
     return cells
 
-def cancelMove(grid, plr, cellsInReach):
+
+def cancelMove(fight, cellsInReach):
+    grid = fight.grid
+    plr = fight.plr
+    fight.updateActionButtons("playerTurn")
     for cell in cellsInReach:
         cell.setColor("white")
         cell.setCommand(None)
-    grid[plr.xPos][plr.yPos].setCommand(lambda: moveAction(grid, plr.currentRoom, plr))
+    grid[plr.xPos][plr.yPos].setCommand(lambda: moveAction(fight))
 
-def showActionButtons(frame, backButton, grid, room, plr, log, enemy):
-    actionButtonFrame = ttk.Frame(frame)
-    attackButton = Button("Attack", lambda: [attackAction(backButton, grid, room, plr, log, attackButton)], actionButtonFrame)
-    attackButton.grid(column=0, row=0, padx=1)
-    Button("Enemy Move", lambda: moveEnemy(grid, plr, enemy), actionButtonFrame).grid(column=1, row=0, padx=1)
-    actionButtonFrame.grid(column=0, row=room.height)
-def moveEnemy(grid, plr, enemy, x=0, y=0):
+
+def cancelAttack(fight):
+    grid = fight.grid
+    plr = fight.plr
+    fight.updateActionButtons("playerTurn")
+    emptyAttackSquares = getCellsInReach(fight, fight.plr.weapon.reach, fight.plr.xPos,
+                                         fight.plr.yPos, "walkable")
+    attackSquaresWithEnemy = getCellsInReach(fight, fight.plr.weapon.reach, fight.plr.xPos,
+                                             fight.plr.yPos, "enemy")
+    for cell in emptyAttackSquares:
+        cell.setColor("white")
+        cell.setCommand(None)
+    for cell in attackSquaresWithEnemy:
+        cell.setColor("green")
+        cell.setCommand(None)
+    grid[plr.xPos][plr.yPos].setCommand(lambda: moveAction(fight))
+
+
+def moveEnemy(fight, x=0, y=0):
+    grid = fight.grid
+    plr = fight.plr
+    enemy = fight.enemy
     if enemy.xPos is not None:
         grid[enemy.xPos][enemy.yPos].setColor("white")
         grid[enemy.xPos][enemy.yPos].setCommand(None)
@@ -161,38 +239,35 @@ def moveEnemy(grid, plr, enemy, x=0, y=0):
     grid[enemy.xPos][enemy.yPos].states["walkable"] = False
     grid[enemy.xPos][enemy.yPos].states["enemy"] = True
 
-def attackAction(backButton, grid, room, plr, log, button):
-    cells = getCellsInReach(grid, room, plr.weapon.reach, plr.xPos, plr.yPos, "walkable")
-    enemyCells = getCellsInReach(grid, room, plr.weapon.reach, plr.xPos, plr.yPos, "enemy")
-    if len(enemyCells) > 0:
-        button.configure(command=lambda: [cancelMove(grid, plr, cells), enemyCells[0].setColor("green"),
-                                          enemyCells[0].setCommand(None),
-                                          button.configure(command=lambda: attackAction(backButton, grid, room, plr, log, button))])
-    else:
-        button.configure(command=lambda: [cancelMove(grid, plr, cells), button.configure(
-            command=lambda: (attackAction(backButton, grid, room, plr, log, button)))])
 
+def showAttackSquares(fight, actionButtonFrame, button):
+    fight.updateActionButtons("playerAiming")
+    plr = fight.plr
+    cells = getCellsInReach(fight, plr.weapon.reach, plr.xPos, plr.yPos, "walkable")
+    enemyCells = getCellsInReach(fight, plr.weapon.reach, plr.xPos, plr.yPos, "enemy")
     for cell in enemyCells:
         cell.setColor("SeaGreen3")
-        cell.setCommand(lambda: attackEnemy(backButton, plr, log))
+        cell.setCommand(lambda: [attackEnemy(fight)])
 
     for cell in cells:
         cell.setColor("orange")
 
 
-def attackEnemy(backButton, plr, log):
+def attackEnemy(fight):
+    plr = fight.plr
+    log = fight.log
     enemy = plr.currentRoom.enemy
     attackPower = plr.strength + plr.weapon.strBonus
-    enemy.health -= attackPower
+    enemy.health -= np.clip(attackPower, None, enemy.health)
     out(log, f"You attack the {enemy.name} for {attackPower} damage. They now have {enemy.health} hp left.")
-    if enemy.health <= 0:
+    if enemy.health == 0:
         plr.xPos = None
         plr.yPos = None
-        backButton.grid()
+        fight.updateActionButtons("battleWon")
+
 
 def out(log, text):
     log.configure(state="normal")
-    log.insert(tk.END, text+"\n\n")
+    log.insert(tk.END, text + "\n\n")
     log.see("end")
     log.configure(state="disabled")
-
