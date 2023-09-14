@@ -43,19 +43,18 @@ class Fight:
         if state == "starting":
             pass
         elif state == "playerTurn":
-            attackButton = Button("Attack", lambda: [showAttackSquares(self, self.actionButtonFrame, attackButton)],
+            attackButton = Button("Attack", lambda: showAttackSquares(self, self.actionButtonFrame, attackButton),
                                   self.actionButtonFrame)
             attackButton.grid(column=0, row=0, padx=1)
-            Button("Move", lambda: [moveAction(self)], self.actionButtonFrame).grid(column=1, row=0, padx=1)
+            Button("Move", lambda: moveAction(self), self.actionButtonFrame).grid(column=1, row=0, padx=1)
+            Button("End Turn", lambda: enemyTurn(self), self.actionButtonFrame).grid(column=2, row=0, padx=1)
         elif state == "playerMoving":
             Button("Cancel Move", lambda: [cancelMove(self, getCellsInReach(self, self.plr.movementSpeed, self.plr.xPos,
                                                                             self.plr.yPos, "walkable"))], self.actionButtonFrame).grid()
         elif state == "playerAiming":
             Button("Cancel Attack", lambda: [cancelAttack(self)], self.actionButtonFrame).grid()
         elif state == "enemyTurn":
-            moveEnemy(self)
-            self.state = "playerTurn"
-            self.updateActionButtons()
+            pass
         elif state == "battleWon":
             Button(*self.backButtonArgs).grid()
         else:
@@ -102,7 +101,7 @@ def main(frame, backButton, plr):
     fight = Fight(frame, backButton, plr)
     fight.setup()
     movePlayer(fight, fight.room.width - 1, fight.room.height - 1)
-    moveEnemy(fight)
+    moveEnemy(fight, 0, 0)
     fight.updateActionButtons()
 
 
@@ -118,8 +117,29 @@ def createGrid(room, frame):
     return grid
 
 
-def enemyTurn():
-    pass
+def enemyTurn(fight):
+    fight.updateActionButtons("enemyTurn")
+    moveTowardsPlayer(fight, *getDesiredPos(fight))
+    fight.updateActionButtons("playerTurn")
+
+
+def getDesiredPos(fight):
+    enemy = fight.enemy
+    plr = fight.plr
+    if (plr.xPos - enemy.xPos) ** 2 + (plr.yPos - enemy.yPos) ** 2 >= (enemy.reach + 1) ** 2:
+        closestCell = fight.grid[0][0]
+        for cell in getCellsInReach(fight, enemy.reach, enemy.xPos, enemy.yPos):
+            if cell.states["walkable"]:
+                if (plr.xPos - cell.x) ** 2 + (plr.yPos - cell.y) ** 2 < (plr.xPos - closestCell.x) ** 2 + (plr.yPos - closestCell.y) ** 2:
+                    closestCell = cell
+        xDiff = closestCell.x - enemy.xPos
+        yDiff = closestCell.y - enemy.yPos
+        x = plr.xPos - xDiff
+        y = plr.yPos - yDiff
+    else:
+        x = enemy.xPos
+        y = enemy.yPos
+    return x, y
 
 
 def movePlayer(fight, x, y):
@@ -188,56 +208,50 @@ def cancelAttack(fight):
     grid[plr.xPos][plr.yPos].setCommand(lambda: moveAction(fight))
 
 
-def moveEnemy(fight, x=0, y=0):
+def moveTowardsPlayer(fight, x=0, y=0):
     grid = fight.grid
-    plr = fight.plr
     enemy = fight.enemy
-    if enemy.xPos is not None:
+    if (x, y) != (enemy.xPos, enemy.yPos):
         grid[enemy.xPos][enemy.yPos].setColor("white")
         grid[enemy.xPos][enemy.yPos].setCommand(None)
         grid[enemy.xPos][enemy.yPos].states["walkable"] = True
         grid[enemy.xPos][enemy.yPos].states["enemy"] = False
-        if abs(plr.xPos - enemy.xPos) ** 2 + abs(plr.yPos - enemy.yPos) ** 2 > enemy.movementSpeed ** 2:
+        if abs(x - enemy.xPos) ** 2 + abs(y - enemy.yPos) ** 2 > enemy.movementSpeed ** 2:
             try:
-                direction = numpy.arctan(abs(plr.xPos - enemy.xPos) / abs(plr.yPos - enemy.yPos))
+                direction = numpy.arctan(abs(x - enemy.xPos) / abs(y - enemy.yPos))
 
                 moveX = math.floor(enemy.movementSpeed * numpy.sin(direction))
-                if enemy.xPos > plr.xPos:
+                if enemy.xPos > x:
                     enemy.xPos -= moveX
                 else:
                     enemy.xPos += moveX
 
                 moveY = math.floor(enemy.movementSpeed * numpy.cos(direction))
-                if enemy.yPos > plr.yPos:
+                if enemy.yPos > y:
                     enemy.yPos -= moveY
                 else:
                     enemy.yPos += moveY
+
             except ZeroDivisionError:
-                if enemy.xPos > plr.xPos:
+                if enemy.xPos > x:
                     enemy.xPos -= enemy.movementSpeed
                 else:
                     enemy.xPos += enemy.movementSpeed
         else:
-            if enemy.xPos > plr.xPos:
-                enemy.xPos = plr.xPos + 1
-            elif enemy.xPos == plr.xPos:
-                enemy.xPos = plr.xPos
-            else:
-                enemy.xPos = plr.xPos - 1
+            enemy.xPos = x
+            enemy.yPos = y
 
-            if enemy.yPos > plr.yPos:
-                enemy.yPos = plr.yPos + 1
-            elif enemy.yPos == plr.yPos:
-                enemy.yPos = plr.yPos
-            else:
-                enemy.yPos = plr.yPos - 1
-    else:
-        enemy.xPos = x
-        enemy.yPos = y
+        moveEnemy(fight, enemy.xPos, enemy.yPos)
 
-    grid[enemy.xPos][enemy.yPos].setColor("green")
-    grid[enemy.xPos][enemy.yPos].states["walkable"] = False
-    grid[enemy.xPos][enemy.yPos].states["enemy"] = True
+
+def moveEnemy(fight, x, y):
+    enemy = fight.enemy
+    grid = fight.grid
+    enemy.xPos = x
+    enemy.yPos = y
+    grid[x][y].setColor("green")
+    grid[x][y].states["walkable"] = False
+    grid[x][y].states["enemy"] = True
 
 
 def showAttackSquares(fight, actionButtonFrame, button):

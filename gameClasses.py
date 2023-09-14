@@ -1,4 +1,3 @@
-
 class Room:
     def __init__(self, desc="", enemy=None):
         self.desc = desc
@@ -9,7 +8,7 @@ class Room:
 
 
 class Enemy:
-    def __init__(self, name, strength, article, health):
+    def __init__(self, name, strength, article, health, reach=3):
         self.name = name
         self.strength = strength
         self.article = article  # The article that precedes the enemy's name (ex: {A} rat approaches you)
@@ -17,6 +16,7 @@ class Enemy:
         self.yPos = None
         self.movementSpeed = 3
         self.health = health
+        self.reach = reach
 
 
 class Weapon:

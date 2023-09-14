@@ -44,15 +44,6 @@ def createGameWindow():
     style.configure("TButton", font=(None, 15))
     style.map('TButton', background=[('active', 'gray70')])
     style.configure("TLabel", font=(None, 15))
-    style.configure("Walkable.TButton", background="red", font=(None, 9))
-    style.map('Walkable.TButton', background=[('active', 'red4')])
-    style.configure("Player.TButton", background="blue", font=(None, 9))
-    style.map('Player.TButton', background=[('active', 'blue4')])
-    style.configure("Enemy.TButton", background="green", font=(None, 9))
-    style.map('Enemy.TButton', background=[('active', 'green4')])
-    style.configure("Free.TButton", font=(None, 9))
-    style.map('Free.TButton', background=[('active', 'gray70')])
-
 
     return w
 
@@ -74,6 +65,7 @@ def createNotebookPage(notebook, name):
 def clear(frame):
     for i in frame.winfo_children():
         i.destroy()
+
 
 def error(text):
     print(f"\033[91m{text}\033[0m")
