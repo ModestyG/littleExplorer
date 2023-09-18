@@ -22,7 +22,7 @@ ROOM_DESCRIPTIONS = resources.ROOM_DESCRIPTIONS
 
 
 class Player:
-    def __init__(self, strength=1, lv=1, name="", maxHP=5):
+    def __init__(self, strength=1, lv=1, name="", maxHP=10):
         self.hp = maxHP
         self.strength = strength
         self.lv = lv
@@ -38,11 +38,17 @@ class Player:
         self.xPos = None
         self.yPos = None
 
+        self.actions = 0
+        self.movement = self.movementSpeed
+
     def loseHealth(self, amount=1):
         self.hp -= amount
         updateCharacterPage()
         if self.hp <= 0:
             gameOver()
+
+    def setMovement(self, amount):
+        self.movement = amount
 
 
 # Room functions
@@ -62,6 +68,8 @@ def buildRoom():
     room.chestContents.append(WEAPONS[random.randint(0, len(WEAPONS) - 1)])
     room.width = random.randint(3, 15)
     room.height = random.randint(5, 15)
+    room.width = 10
+    room.height = 10
     plr.currentRoom = room
 
     if random.randint(0, 5) == 1:
@@ -79,37 +87,6 @@ def encounterTrap():
     Label(mainPage, text="You run into a trap and lose 1 health!").grid()
     plr.loseHealth(1)
     Button("Continue", describeRoom, mainPage).grid()
-
-
-def fightEnemy():
-    enemy = plr.currentRoom.enemy
-    attackStrength = plr.strength + plr.weapon.strBonus
-    clear(mainPage)
-    Label(mainPage, text=f"You encounter {enemy.article} {enemy.name}!").grid()
-    if attackStrength > enemy.strength:
-        Label(mainPage,
-              text=f"The {enemy.name} is weaker than you and you successfully defeat it!\nLevel up!").grid()
-        plr.lv += 1
-        updateCharacterPage()
-        if plr.lv >= 10:
-            win()
-
-    elif attackStrength < enemy.strength:
-        Label(mainPage,
-              text=f"The {enemy.name} is stronger than you and you are thoroughly thrashed by it!").grid()
-        plr.loseHealth(1)
-
-    else:
-        Label(mainPage,
-              text=f"You and the {enemy.name} are equally strong and decide to call it a draw.").grid()
-
-    Button("Details", lambda: battleDetails(enemy, attackStrength), mainPage).grid()
-    Button("Continue", describeRoom, mainPage).grid()
-
-
-def battleDetails(enemy, attackStrength):
-    Label(mainPage,
-          text=f"Your total attack power was {attackStrength} while you enemy's was {enemy.strength}.").grid()
 
 
 # Inventory/Chest functions
@@ -157,6 +134,7 @@ def inspectItem(item):
     clear(inventoryPage)
     Label(inventoryPage, item.name).grid()
     Label(inventoryPage, f"Attack bonus: {item.strBonus}").grid()
+    Label(inventoryPage, f"Range: {item.reach}").grid()
     Label(inventoryPage, item.desc).grid()
     Button("Equip", lambda: [updateInventoryPage(), equipItem(item)], inventoryPage).grid()
     Button("Put Away", lambda: moveItem(item), inventoryPage).grid()
@@ -212,8 +190,10 @@ def win():
 #   Start
 
 def debug():
-    plr.weapon = Weapon("Ultra Mega Cheater Sword", 9999, "a", 8, "This sword is only to be wielded by cheaters and debuggers")
-    plr.movementSpeed = 10
+    plr.weapon = Weapon("Ultra Mega Cheater Sword", 1, "a", 8, "This sword is only to be wielded by cheaters and debuggers")
+    plr.movementSpeed = 5
+    plr.maxHP = 999
+    plr.hp = plr.maxHP
 
 
 def main():
@@ -224,5 +204,5 @@ def main():
 
 
 plr = Player()
-debug()
+# debug()
 main()
