@@ -68,6 +68,8 @@ def buildRoom():
     room.chestContents.append(WEAPONS[random.randint(0, len(WEAPONS) - 1)])
     room.width = random.randint(3, 15)
     room.height = random.randint(5, 15)
+    room.width = 10
+    room.height = 10
     plr.currentRoom = room
 
     if random.randint(0, 5) == 1:
