@@ -8,17 +8,24 @@ import resources
 from gameClasses import *
 from tkManager import *
 
+#   Import resources
+ENEMIES = resources.ENEMIES
+WEAPONS = resources.WEAPONS
+ROOM_DESCRIPTIONS = resources.ROOM_DESCRIPTIONS
+RUNES = resources.RUNES
+SPELLS = resources.SPELLS
+
+#   Setup game UI
 w = createGameWindow()
 
 notebook = createGameNotebook(w)
 mainPage = createNotebookPage(notebook, " Main ")
 characterPage = createNotebookPage(notebook, " Character ")
 inventoryPage = createNotebookPage(notebook, " Inventory ")
+magicPage = createNotebookPage(notebook, " Magic ")
 
-#   Import resources
-ENEMIES = resources.ENEMIES
-WEAPONS = resources.WEAPONS
-ROOM_DESCRIPTIONS = resources.ROOM_DESCRIPTIONS
+#   Setup magic
+runeSlots = [RUNES[0], RUNES[0], RUNES[0]]
 
 
 class Player:
@@ -27,6 +34,7 @@ class Player:
         self.strength = strength
         self.lv = lv
         self.inv = []
+        self.runeInv = []
         self.invSize = 5
         self.weapon = Weapon("Hand-wraps", 0, "", 1, "Flimsy bandages that protect your fists while boxing. Not very "
                                                      "useful.")
@@ -54,6 +62,7 @@ class Player:
 # Room functions
 
 def describeRoom():
+    updateMagicPage()
     clear(mainPage)
     Label(mainPage, text=plr.currentRoom.desc).grid()
     Button("Chest", openChest, mainPage).grid()
@@ -66,6 +75,7 @@ def buildRoom():
     room = Room(desc=ROOM_DESCRIPTIONS[random.randint(0, len(ROOM_DESCRIPTIONS) - 1)])
     room.enemy = deepcopy(ENEMIES[random.randint(0, len(ENEMIES) - 1)])
     room.chestContents.append(WEAPONS[random.randint(0, len(WEAPONS) - 1)])
+    room.chestContents.append(RUNES[random.randint(0, len(RUNES) - 1)])
     room.width = random.randint(3, 15)
     room.height = random.randint(5, 15)
     plr.currentRoom = room
@@ -74,6 +84,8 @@ def buildRoom():
         encounterTrap()
     else:
         clear(mainPage)
+        clear(magicPage)
+        Label(magicPage, "Cannot experiment while in battle.").grid()
         backButton = ("Continue", describeRoom)
         fight.main(mainPage, backButton, plr)
 
@@ -102,9 +114,13 @@ def openChest():
 
 def takeItem(item):
     if plr.invSize > len(plr.inv):
-        plr.inv.append(item)
+        if type(item) == Rune:
+            plr.runeInv.append(item)
+            updateMagicPage()
+        else:
+            plr.inv.append(item)
+            updateInventoryPage()
         plr.currentRoom.chestContents.remove(item)
-        updateInventoryPage()
 
 
 def moveItem(item):
@@ -131,10 +147,11 @@ def throwItem(item):
 def inspectItem(item):
     clear(inventoryPage)
     Label(inventoryPage, item.name).grid()
-    Label(inventoryPage, f"Attack bonus: {item.strBonus}").grid()
-    Label(inventoryPage, f"Range: {item.reach}").grid()
     Label(inventoryPage, item.desc).grid()
-    Button("Equip", lambda: [updateInventoryPage(), equipItem(item)], inventoryPage).grid()
+    if type(item) == Weapon:
+        Label(inventoryPage, f"Attack bonus: {item.strBonus}").grid()
+        Label(inventoryPage, f"Range: {item.reach}").grid()
+        Button("Equip", lambda: [updateInventoryPage(), equipItem(item)], inventoryPage).grid()
     Button("Put Away", lambda: moveItem(item), inventoryPage).grid()
     Button("Back", lambda: updateInventoryPage(), inventoryPage).grid()
 
@@ -169,6 +186,52 @@ def updateInventoryPage():
         Button(item.name, lambda i=item: inspectItem(i), inventoryPage).grid()
 
 
+def updateMagicPage():
+    clear(magicPage)
+    magicFrame = ttk.Frame(magicPage)
+    magicFrame.grid()
+    i = 0
+    for rune in runeSlots:
+        RuneSlotImage(magicFrame, lambda index=i: removeRune(index), rune.image).grid(row=0, column=i)
+        i += 1
+    Button("Activate", activateExperiment, magicFrame).grid(row=1, column=0, columnspan=len(runeSlots))
+    Label(magicFrame, "Your runes:").grid(row=2, column=0, columnspan=len(runeSlots))
+    if plr.runeInv:
+        for rune in plr.runeInv:
+            Button(rune.name, lambda r=rune: addRune(r), magicFrame).grid()
+    else:
+        Label(magicFrame, "You don't have any runes at the moment. Keep exploring to find some!").grid(row=3, column=0,
+                                                                                                       columnspan=len(runeSlots))
+
+
+def activateExperiment():
+    runeSlotIds = ""
+    for rune in runeSlots:
+        if rune != RUNES[0]:
+            runeSlotIds += str(rune.id) + ";"
+    try:
+        outcome = SPELLS[runeSlotIds].desc
+    except KeyError:
+        outcome = "The runes glow for a second before the power fizzles out with a slight hissing sound."
+
+    clear(magicPage)
+    Label(magicPage, outcome).grid()
+    Button("Continue", updateMagicPage, magicPage).grid()
+
+
+def addRune(rune):
+    for i in range(len(runeSlots)):
+        if not runeSlots[i].id:
+            runeSlots[i] = rune
+            break
+    updateMagicPage()
+
+
+def removeRune(index):
+    runeSlots[index] = RUNES[0]
+    updateMagicPage()
+
+
 #   Win and Lose placeholder functions
 
 def gameOver():
@@ -188,7 +251,7 @@ def win():
 #   Start
 
 def debug():
-    plr.weapon = Weapon("Ultra Mega Cheater Sword", 1, "a", 8, "This sword is only to be wielded by cheaters and debuggers")
+    plr.weapon = Weapon("Ultra Mega Cheater Sword", 999, "a", 8, "This sword is only to be wielded by cheaters and debuggers")
     plr.movementSpeed = 5
     plr.maxHP = 999
     plr.hp = plr.maxHP

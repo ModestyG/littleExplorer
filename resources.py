@@ -1,4 +1,5 @@
-from gameClasses import*
+from gameClasses import *
+
 ENEMIES = [
     Enemy("Spider", 1, "a", 1),
     Enemy("Rat", 1, "a", 2),
@@ -18,3 +19,15 @@ ROOM_DESCRIPTIONS = [
     "You have entered a long corridor with multiple numbered doors on both sides. The floor is covered in red carpet "
     "and the lights are turned down. You can hear faint lobby music. Only three of the doors seem unlocked."
 ]
+
+RUNES = [
+    Rune("None", 0),
+    Rune("Frost Rune", 1, "ice.png"),
+    Rune("Fire Rune", 2, "fire.png")
+]
+
+SPELLS = {
+    "": Spell("You haven't chosen any runes. Nothing happens."),
+    "1;": Spell("The rune slowly grows colder until you are forced to drop it. As soon as you stop touching it, the rune's glow fades "
+                "out. Your fingertips are covered in frost.")
+}

@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 
+from PIL import ImageTk, Image
+
 
 class Button(ttk.Button):
     def __init__(self, text, command, parent):
@@ -28,6 +30,18 @@ class NotebookPage(ttk.Frame):
         kwargs = {
             "width": parent.cget("width"),
             "height": parent.cget("height")
+        }
+        super().__init__(parent, **kwargs)
+
+
+class RuneSlotImage(ttk.Button):
+    def __init__(self, parent, command, image="placeholder.png"):
+        img = Image.open(image)
+        photo = ImageTk.PhotoImage(img.resize((150, 200)))
+        self.image = photo
+        kwargs = {
+            "command": command,
+            "image": photo
         }
         super().__init__(parent, **kwargs)
 
