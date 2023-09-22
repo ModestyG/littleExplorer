@@ -26,3 +26,16 @@ class Weapon:
         self.article = article  # The article that precedes the weapon's name (ex: You found {a} dagger)
         self.desc = desc
         self.reach = reach
+
+
+class Rune:
+    def __init__(self, name, runeId, image="placeholder.png"):
+        self.name = name
+        self.id = runeId
+        self.image = image
+        self.desc = "A stone tablet with a glowing engraving."
+
+
+class Spell:
+    def __init__(self, desc):
+        self.desc = desc
