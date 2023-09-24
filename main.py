@@ -254,7 +254,7 @@ def win():
 def debug():
     plr.weapon = Weapon("Ultra Mega Cheater Sword", 999, "a", 8, "This sword is only to be wielded by cheaters and debuggers")
     plr.movementSpeed = 5
-    plr.maxHP = 999
+    plr.maxHP = 5
     plr.hp = plr.maxHP
     plr.runeInv.append(RUNES[1])
 

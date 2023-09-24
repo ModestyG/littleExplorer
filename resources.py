@@ -1,4 +1,5 @@
 from gameClasses import *
+from spellFunctions import *
 
 ENEMIES = [
     Enemy("Spider", 1, "a", 1),
@@ -27,7 +28,8 @@ RUNES = [
 ]
 
 SPELLS = {
-    "": Spell("You haven't chosen any runes. Nothing happens."),
+    "": Spell("You haven't chosen any runes. Nothing happens.", uselessSpell),
+
     "1;": Spell("The rune slowly grows colder until you are forced to drop it. As soon as you stop touching it, the rune's glow fades "
-                "out. Your fingertips are covered in frost.")
+                "out. Your fingertips are covered in frost.", spell_1)
 }

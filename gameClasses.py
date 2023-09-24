@@ -37,5 +37,13 @@ class Rune:
 
 
 class Spell:
-    def __init__(self, desc):
+    def __init__(self, desc, spellFunction, fightDesc="", args=0):
         self.desc = desc
+        self.spellFunction = spellFunction
+        if fightDesc == "":
+            fightDesc = desc
+        self.fightDesc = fightDesc
+        self.args = args
+
+    def execute(self, args):
+        return self.spellFunction(args)

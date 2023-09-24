@@ -152,10 +152,8 @@ def attackPlayer(fight):
     plr = fight.plr
     log = fight.log
     enemy = fight.enemy
-    plr.hp -= np.clip(enemy.strength, None, plr.hp)
+    plr.loseHealth(np.clip(enemy.strength, None, plr.hp))
     out(log, f"The {enemy.name} attack you for {enemy.strength} damage. You now have {plr.hp} hp left.")
-    if plr.hp == 0:
-        gameOver(fight)
 
 
 def getDesiredPos(fight):
@@ -237,16 +235,22 @@ def magicAction(fight):
 
 
 def castSpell(fight):
+    args = {
+        "plr": fight.plr
+    }
     runeSlotIds = ""
     for rune in fight.runeSlots:
         if rune != RUNES[0]:
             runeSlotIds += str(rune.id) + ";"
     try:
-        outcome = SPELLS[runeSlotIds].desc
+        spell = SPELLS[runeSlotIds]
+        outcome = spell.fightDesc
     except KeyError:
+        spell = SPELLS[""]
         outcome = "The runes glow for a second before the power fizzles out with a slight hissing sound."
 
     out(fight.log, outcome)
+    out(fight.log, spell.execute(args))
 
 
 def movePlayer(fight, x, y):
@@ -381,9 +385,8 @@ def out(log, text):
     log.see("end")
     log.configure(state="disabled")
 
-
-def gameOver(fight):
-    plr = fight.plr
-    out(fight.log, "You died! Game Over")
-    fight.grid[plr.xPos][plr.yPos].setCommand(None)
-    fight.updateActionButtons("gameOver")
+# def gameOver(fight):
+#     plr = fight.plr
+#     out(fight.log, "You died! Game Over")
+#     fight.grid[plr.xPos][plr.yPos].setCommand(None)
+#     fight.updateActionButtons("gameOver")
