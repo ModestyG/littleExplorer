@@ -2,6 +2,7 @@ import math
 
 import numpy as np
 
+from resources import RUNES, SPELLS
 from tkManager import *
 
 
@@ -16,13 +17,14 @@ class Fight:
         self.log = tk.Text(frame, height=1.5 * self.room.height, width=40, state="disabled")
         self.actionButtonFrame = ttk.Frame(frame)
         self.state = "starting"
+        self.runeSlots = [RUNES[0], RUNES[0], RUNES[0]]
 
     def setup(self):
         gridFrame = ttk.Frame(self.frame)
-        gridFrame.grid()
+        gridFrame.grid(column=0, row=0)
         self.grid = createGrid(self.room, gridFrame)
         self.log.grid(column=1, row=0)
-        self.actionButtonFrame.grid(column=0, row=self.room.height, columnspan=2)
+        self.actionButtonFrame.grid(column=0, row=1, columnspan=2)
         self.backButtonArgs += (self.actionButtonFrame,)
         self.state = "playerTurn"
 
@@ -54,7 +56,12 @@ class Fight:
                 moveButton["state"] = tk.DISABLED
             moveButton.grid(column=1, row=0, padx=1)
 
-            Button("End Turn", lambda: enemyTurn(self), self.actionButtonFrame).grid(column=2, row=0, padx=1)
+            magicButton = Button("Magic", lambda: magicAction(self), self.actionButtonFrame)
+            if self.plr.actions == 0:
+                magicButton["state"] = tk.DISABLED
+            magicButton.grid(column=2, row=0, padx=1)
+
+            Button("End Turn", lambda: enemyTurn(self), self.actionButtonFrame).grid(column=3, row=0, padx=1)
         elif state == "playerMoving":
             Button("Cancel Move", lambda: [cancelMove(self, getCellsInReach(self, self.plr.movementSpeed, self.plr.xPos,
                                                                             self.plr.yPos, "walkable"))], self.actionButtonFrame).grid()
@@ -193,6 +200,53 @@ def getOrientation(var1, var2):  # Returns 1, 0, or -1
         return 0
     else:
         return 1
+
+
+def addRune(fight, rune):
+    for i in range(len(fight.runeSlots)):
+        if not fight.runeSlots[i].id:
+            fight.runeSlots[i] = rune
+            break
+    magicAction(fight)
+
+
+def removeRune(fight, index):
+    fight.runeSlots[index] = RUNES[0]
+    magicAction(fight)
+
+
+def magicAction(fight):
+    plr = fight.plr
+    magicFrame = ttk.Frame(fight.frame)
+    magicFrame.grid(column=0, row=2, columnspan=2)
+    clear(magicFrame)
+    i = 0
+    for rune in fight.runeSlots:
+        RuneSlotImage(magicFrame, lambda index=i: removeRune(fight, index), rune.image, (75, 100)).grid(row=0, column=i)
+        i += 1
+    Button("Activate", lambda: castSpell(fight), magicFrame).grid(row=1, column=0, columnspan=len(fight.runeSlots))
+    Label(magicFrame, "Your runes:").grid(row=2, column=0, columnspan=len(fight.runeSlots))
+    if plr.runeInv:
+        runesFrame = ttk.Frame(magicFrame)
+        runesFrame.grid(column=0, row=2, columnspan=len(fight.runeSlots))
+        for rune in plr.runeInv:
+            Button(rune.name, lambda r=rune: addRune(fight, r), runesFrame).grid()
+    else:
+        Label(magicFrame, "You don't have any runes at the moment. Keep exploring to find some!").grid(row=3, column=0,
+                                                                                                       columnspan=len(fight.runeSlots))
+
+
+def castSpell(fight):
+    runeSlotIds = ""
+    for rune in fight.runeSlots:
+        if rune != RUNES[0]:
+            runeSlotIds += str(rune.id) + ";"
+    try:
+        outcome = SPELLS[runeSlotIds].desc
+    except KeyError:
+        outcome = "The runes glow for a second before the power fizzles out with a slight hissing sound."
+
+    out(fight.log, outcome)
 
 
 def movePlayer(fight, x, y):

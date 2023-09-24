@@ -48,6 +48,7 @@ class Player:
 
         self.actions = 0
         self.movement = self.movementSpeed
+        self.runeSlots = [RUNES[0], RUNES[0], RUNES[0]]
 
     def loseHealth(self, amount=1):
         self.hp -= amount
@@ -75,7 +76,7 @@ def buildRoom():
     room = Room(desc=ROOM_DESCRIPTIONS[random.randint(0, len(ROOM_DESCRIPTIONS) - 1)])
     room.enemy = deepcopy(ENEMIES[random.randint(0, len(ENEMIES) - 1)])
     room.chestContents.append(WEAPONS[random.randint(0, len(WEAPONS) - 1)])
-    room.chestContents.append(RUNES[random.randint(0, len(RUNES) - 1)])
+    room.chestContents.append(RUNES[random.randint(1, len(RUNES) - 1)])
     room.width = random.randint(3, 15)
     room.height = random.randint(5, 15)
     plr.currentRoom = room
@@ -255,6 +256,7 @@ def debug():
     plr.movementSpeed = 5
     plr.maxHP = 999
     plr.hp = plr.maxHP
+    plr.runeInv.append(RUNES[1])
 
 
 def main():
@@ -265,5 +267,5 @@ def main():
 
 
 plr = Player()
-# debug()
+debug()
 main()

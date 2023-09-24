@@ -35,9 +35,9 @@ class NotebookPage(ttk.Frame):
 
 
 class RuneSlotImage(ttk.Button):
-    def __init__(self, parent, command, image="placeholder.png"):
+    def __init__(self, parent, command, image="placeholder.png", dimensions=(150, 200)):
         img = Image.open(image)
-        photo = ImageTk.PhotoImage(img.resize((150, 200)))
+        photo = ImageTk.PhotoImage(img.resize(dimensions))
         self.image = photo
         kwargs = {
             "command": command,
@@ -49,7 +49,7 @@ class RuneSlotImage(ttk.Button):
 def createGameWindow():
     w = tk.Tk()
     w.title("Adventure Game")
-    w.geometry("700x450+500+100")
+    # w.geometry("700x450+500+100")
     w.resizable(False, False)
     w.grid_columnconfigure(0, weight=1)
     w.grid_rowconfigure(0, weight=1)
@@ -64,7 +64,7 @@ def createGameWindow():
 
 def createGameNotebook(frame):
     notebook = ttk.Notebook(frame)
-    notebook.configure(width=690, height=420)
+    # notebook.configure(width=690, height=420)
     notebook.grid()
     return notebook
 
