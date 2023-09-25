@@ -36,6 +36,7 @@ class Fight:
               - "playerTurn"   -> It's the player's turn and they are not in the middle of an action (all actions should be enabled)
               - "playerMoving" -> It's the player's turn and they are choosing where to move (only cancel move should be enabled)
               - "playerAiming" -> It's the player's turn and they are choosing where to aim (only cancel attack should be enabled)
+              - "playerCasting"-> It's the player's turn and they are choosing what spell to cast (only cancel cast should be enabled)
               - "enemyTurn"    -> It's the player's turn (no actions should be enabled)
               - "battleWon"    -> The battle is won and only the continue button should be visible
         """
