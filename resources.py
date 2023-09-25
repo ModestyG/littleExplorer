@@ -31,5 +31,6 @@ SPELLS = {
     "": Spell("You haven't chosen any runes. Nothing happens.", uselessSpell),
 
     "1;": Spell("The rune slowly grows colder until you are forced to drop it. As soon as you stop touching it, the rune's glow fades "
-                "out. Your fingertips are covered in frost.", spell_1)
+                "out. Your fingertips are covered in frost.", spell_1),
+    "2;": Spell("A small ball of fire forms in your hand before launching off towards a wall", spell_2, False)
 }

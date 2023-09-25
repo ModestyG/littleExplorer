@@ -256,7 +256,7 @@ def debug():
     plr.movementSpeed = 5
     plr.maxHP = 5
     plr.hp = plr.maxHP
-    plr.runeInv.append(RUNES[1])
+    plr.runeInv.append(RUNES[2])
 
 
 def main():

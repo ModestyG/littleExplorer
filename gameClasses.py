@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class Room:
     def __init__(self, desc="", enemy=None):
         self.desc = desc
@@ -18,6 +21,15 @@ class Enemy:
         self.health = health
         self.reach = reach
 
+    def loseHealth(self, fight, amount=1, printWin=True):
+        plr = fight.plr
+        self.health -= np.clip(amount, None, self.health)
+        if self.health == 0 and printWin:
+            plr.xPos = None
+            plr.yPos = None
+            print("eilfhigjdgjo")
+            fight.updateActionButtons("battleWon")
+
 
 class Weapon:
     def __init__(self, name, strBonus, article, reach=1, desc=""):
@@ -37,13 +49,10 @@ class Rune:
 
 
 class Spell:
-    def __init__(self, desc, spellFunction, fightDesc="", args=0):
+    def __init__(self, desc, spellFunction, useNormalDescInFight=True):
         self.desc = desc
         self.spellFunction = spellFunction
-        if fightDesc == "":
-            fightDesc = desc
-        self.fightDesc = fightDesc
-        self.args = args
+        self.useDesc = useNormalDescInFight
 
     def execute(self, args):
         return self.spellFunction(args)

@@ -18,6 +18,7 @@ class Fight:
         self.actionButtonFrame = ttk.Frame(frame)
         self.state = "starting"
         self.runeSlots = [RUNES[0], RUNES[0], RUNES[0]]
+        self.temporaryFrame = None
 
     def setup(self):
         gridFrame = ttk.Frame(self.frame)
@@ -28,7 +29,7 @@ class Fight:
         self.backButtonArgs += (self.actionButtonFrame,)
         self.state = "playerTurn"
 
-    def updateActionButtons(self, newState=None):
+    def updateActionButtons(self, newState=None, temporaryFrame=None):
         """
         Possible battle states:
               - "starting"     -> The fight is setting up
@@ -67,14 +68,20 @@ class Fight:
                                                                             self.plr.yPos, "walkable"))], self.actionButtonFrame).grid()
         elif state == "playerAiming":
             Button("Cancel Attack", lambda: [cancelAttack(self)], self.actionButtonFrame).grid()
+        elif state == "playerCasting":
+            Button("Cancel Cast", lambda: self.updateActionButtons("playerTurn"), self.actionButtonFrame).grid()
         elif state == "enemyTurn":
             pass
         elif state == "battleWon":
+            out(self.log, "You Won!")
             Button(*self.backButtonArgs).grid()
         elif state == "gameOver":
             Label(self.frame, "Game Over!").grid()
         else:
             error(f"Error: Battle state ({state}) does not exist")
+        if self.temporaryFrame is not None:
+            clear(self.temporaryFrame)
+        self.temporaryFrame = temporaryFrame
 
 
 class GridButton(tk.Button):
@@ -141,7 +148,7 @@ def enemyTurn(fight):
     enemy = fight.enemy
     fight.updateActionButtons("enemyTurn")
     moveTowardsPlayer(fight, *getDesiredPos(fight))
-    for i in getCellsInReach(fight, enemy.reach, enemy.xPos, enemy.yPos, "player"):
+    for _ in getCellsInReach(fight, enemy.reach, enemy.xPos, enemy.yPos, "player"):
         attackPlayer(fight)
     fight.plr.actions = 1
     fight.plr.movement = fight.plr.movementSpeed
@@ -191,15 +198,6 @@ def getDesiredPos(fight):
     return x, y
 
 
-def getOrientation(var1, var2):  # Returns 1, 0, or -1
-    if var1 < var2:
-        return -1
-    elif var1 == var2:
-        return 0
-    else:
-        return 1
-
-
 def addRune(fight, rune):
     for i in range(len(fight.runeSlots)):
         if not fight.runeSlots[i].id:
@@ -218,11 +216,12 @@ def magicAction(fight):
     magicFrame = ttk.Frame(fight.frame)
     magicFrame.grid(column=0, row=2, columnspan=2)
     clear(magicFrame)
+    fight.updateActionButtons("playerCasting", magicFrame)
     i = 0
     for rune in fight.runeSlots:
         RuneSlotImage(magicFrame, lambda index=i: removeRune(fight, index), rune.image, (75, 100)).grid(row=0, column=i)
         i += 1
-    Button("Activate", lambda: castSpell(fight), magicFrame).grid(row=1, column=0, columnspan=len(fight.runeSlots))
+    Button("Activate", lambda: castSpell(fight, magicFrame), magicFrame).grid(row=1, column=0, columnspan=len(fight.runeSlots))
     Label(magicFrame, "Your runes:").grid(row=2, column=0, columnspan=len(fight.runeSlots))
     if plr.runeInv:
         runesFrame = ttk.Frame(magicFrame)
@@ -234,23 +233,35 @@ def magicAction(fight):
                                                                                                        columnspan=len(fight.runeSlots))
 
 
-def castSpell(fight):
-    args = {
-        "plr": fight.plr
-    }
+def castSpell(fight, magicFrame):
+    fight.updateActionButtons("playerTurn")
     runeSlotIds = ""
     for rune in fight.runeSlots:
         if rune != RUNES[0]:
             runeSlotIds += str(rune.id) + ";"
     try:
         spell = SPELLS[runeSlotIds]
-        outcome = spell.fightDesc
+        outcome = spell.desc
     except KeyError:
         spell = SPELLS[""]
         outcome = "The runes glow for a second before the power fizzles out with a slight hissing sound."
-
-    out(fight.log, outcome)
-    out(fight.log, spell.execute(args))
+    args = {
+        "spell": spell,
+        "fight": fight
+    }
+    if spell.useDesc:
+        out(fight.log, outcome)
+    executionOutput = spell.execute(args)
+    if executionOutput:
+        out(fight.log, executionOutput)
+    if fight.enemy.health == 0:
+        fight.plr.xPos = None
+        fight.plr.yPos = None
+        fight.updateActionButtons("battleWon")
+    else:
+        fight.updateActionButtons()
+    fight.plr.actions -= 1
+    clear(magicFrame)
 
 
 def movePlayer(fight, x, y):
@@ -370,13 +381,10 @@ def attackEnemy(fight):
     cancelAttack(fight)
     enemy = plr.currentRoom.enemy
     attackPower = plr.strength + plr.weapon.strBonus
-    enemy.health -= np.clip(attackPower, None, enemy.health)
-    out(log, f"You attack the {enemy.name} for {attackPower} damage. They now have {enemy.health} hp left.")
-    if enemy.health == 0:
-        plr.xPos = None
-        plr.yPos = None
-        fight.updateActionButtons("battleWon")
-        out(log, "You Won!")
+    damage = np.clip(attackPower, None, enemy.health)
+    out(log,
+        f"You attack the {enemy.name} for {attackPower} damage. They now have {enemy.health - damage} hp left.")
+    enemy.loseHealth(fight, damage)
 
 
 def out(log, text):
