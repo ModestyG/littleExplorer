@@ -2,6 +2,7 @@ import math
 
 import numpy as np
 
+from resources import RUNES, SPELLS
 from tkManager import *
 
 
@@ -16,23 +17,26 @@ class Fight:
         self.log = tk.Text(frame, height=1.5 * self.room.height, width=40, state="disabled")
         self.actionButtonFrame = ttk.Frame(frame)
         self.state = "starting"
+        self.runeSlots = [RUNES[0], RUNES[0], RUNES[0]]
+        self.temporaryFrame = None
 
     def setup(self):
         gridFrame = ttk.Frame(self.frame)
-        gridFrame.grid()
+        gridFrame.grid(column=0, row=0)
         self.grid = createGrid(self.room, gridFrame)
         self.log.grid(column=1, row=0)
-        self.actionButtonFrame.grid(column=0, row=self.room.height, columnspan=2)
+        self.actionButtonFrame.grid(column=0, row=1, columnspan=2)
         self.backButtonArgs += (self.actionButtonFrame,)
         self.state = "playerTurn"
 
-    def updateActionButtons(self, newState=None):
+    def updateActionButtons(self, newState=None, temporaryFrame=None):
         """
         Possible battle states:
               - "starting"     -> The fight is setting up
               - "playerTurn"   -> It's the player's turn and they are not in the middle of an action (all actions should be enabled)
               - "playerMoving" -> It's the player's turn and they are choosing where to move (only cancel move should be enabled)
               - "playerAiming" -> It's the player's turn and they are choosing where to aim (only cancel attack should be enabled)
+              - "playerCasting"-> It's the player's turn and they are choosing what spell to cast (only cancel cast should be enabled)
               - "enemyTurn"    -> It's the player's turn (no actions should be enabled)
               - "battleWon"    -> The battle is won and only the continue button should be visible
         """
@@ -54,20 +58,31 @@ class Fight:
                 moveButton["state"] = tk.DISABLED
             moveButton.grid(column=1, row=0, padx=1)
 
-            Button("End Turn", lambda: enemyTurn(self), self.actionButtonFrame).grid(column=2, row=0, padx=1)
+            magicButton = Button("Magic", lambda: magicAction(self), self.actionButtonFrame)
+            if self.plr.actions == 0:
+                magicButton["state"] = tk.DISABLED
+            magicButton.grid(column=2, row=0, padx=1)
+
+            Button("End Turn", lambda: enemyTurn(self), self.actionButtonFrame).grid(column=3, row=0, padx=1)
         elif state == "playerMoving":
             Button("Cancel Move", lambda: [cancelMove(self, getCellsInReach(self, self.plr.movementSpeed, self.plr.xPos,
                                                                             self.plr.yPos, "walkable"))], self.actionButtonFrame).grid()
         elif state == "playerAiming":
             Button("Cancel Attack", lambda: [cancelAttack(self)], self.actionButtonFrame).grid()
+        elif state == "playerCasting":
+            Button("Cancel Cast", lambda: self.updateActionButtons("playerTurn"), self.actionButtonFrame).grid()
         elif state == "enemyTurn":
             pass
         elif state == "battleWon":
+            out(self.log, "You Won!")
             Button(*self.backButtonArgs).grid()
         elif state == "gameOver":
             Label(self.frame, "Game Over!").grid()
         else:
             error(f"Error: Battle state ({state}) does not exist")
+        if self.temporaryFrame is not None:
+            clear(self.temporaryFrame)
+        self.temporaryFrame = temporaryFrame
 
 
 class GridButton(tk.Button):
@@ -134,7 +149,7 @@ def enemyTurn(fight):
     enemy = fight.enemy
     fight.updateActionButtons("enemyTurn")
     moveTowardsPlayer(fight, *getDesiredPos(fight))
-    for i in getCellsInReach(fight, enemy.reach, enemy.xPos, enemy.yPos, "player"):
+    for _ in getCellsInReach(fight, enemy.reach, enemy.xPos, enemy.yPos, "player"):
         attackPlayer(fight)
     fight.plr.actions = 1
     fight.plr.movement = fight.plr.movementSpeed
@@ -145,10 +160,8 @@ def attackPlayer(fight):
     plr = fight.plr
     log = fight.log
     enemy = fight.enemy
-    plr.hp -= np.clip(enemy.strength, None, plr.hp)
+    plr.loseHealth(np.clip(enemy.strength, None, plr.hp))
     out(log, f"The {enemy.name} attack you for {enemy.strength} damage. You now have {plr.hp} hp left.")
-    if plr.hp == 0:
-        gameOver(fight)
 
 
 def getDesiredPos(fight):
@@ -186,13 +199,70 @@ def getDesiredPos(fight):
     return x, y
 
 
-def getOrientation(var1, var2):  # Returns 1, 0, or -1
-    if var1 < var2:
-        return -1
-    elif var1 == var2:
-        return 0
+def addRune(fight, rune):
+    for i in range(len(fight.runeSlots)):
+        if not fight.runeSlots[i].id:
+            fight.runeSlots[i] = rune
+            break
+    magicAction(fight)
+
+
+def removeRune(fight, index):
+    fight.runeSlots[index] = RUNES[0]
+    magicAction(fight)
+
+
+def magicAction(fight):
+    plr = fight.plr
+    magicFrame = ttk.Frame(fight.frame)
+    magicFrame.grid(column=0, row=2, columnspan=2)
+    clear(magicFrame)
+    fight.updateActionButtons("playerCasting", magicFrame)
+    i = 0
+    for rune in fight.runeSlots:
+        RuneSlotImage(magicFrame, lambda index=i: removeRune(fight, index), rune.image, (75, 100)).grid(row=0, column=i)
+        i += 1
+    Button("Activate", lambda: castSpell(fight, magicFrame), magicFrame).grid(row=1, column=0, columnspan=len(fight.runeSlots))
+    Label(magicFrame, "Your runes:").grid(row=2, column=0, columnspan=len(fight.runeSlots))
+    if plr.runeInv:
+        runesFrame = ttk.Frame(magicFrame)
+        runesFrame.grid(column=0, row=2, columnspan=len(fight.runeSlots))
+        for rune in plr.runeInv:
+            Button(rune.name, lambda r=rune: addRune(fight, r), runesFrame).grid()
     else:
-        return 1
+        Label(magicFrame, "You don't have any runes at the moment. Keep exploring to find some!").grid(row=3, column=0,
+                                                                                                       columnspan=len(fight.runeSlots))
+
+
+def castSpell(fight, magicFrame):
+    fight.updateActionButtons("playerTurn")
+    runeSlotIds = ""
+    for rune in fight.runeSlots:
+        if rune != RUNES[0]:
+            runeSlotIds += str(rune.id) + ";"
+    try:
+        spell = SPELLS[runeSlotIds]
+        outcome = spell.desc
+    except KeyError:
+        spell = SPELLS[""]
+        outcome = "The runes glow for a second before the power fizzles out with a slight hissing sound."
+    args = {
+        "spell": spell,
+        "fight": fight
+    }
+    if spell.useDesc:
+        out(fight.log, outcome)
+    executionOutput = spell.execute(args)
+    if executionOutput:
+        out(fight.log, executionOutput)
+    if fight.enemy.health == 0:
+        fight.plr.xPos = None
+        fight.plr.yPos = None
+        fight.updateActionButtons("battleWon")
+    else:
+        fight.updateActionButtons()
+    fight.plr.actions -= 1
+    clear(magicFrame)
 
 
 def movePlayer(fight, x, y):
@@ -312,13 +382,10 @@ def attackEnemy(fight):
     cancelAttack(fight)
     enemy = plr.currentRoom.enemy
     attackPower = plr.strength + plr.weapon.strBonus
-    enemy.health -= np.clip(attackPower, None, enemy.health)
-    out(log, f"You attack the {enemy.name} for {attackPower} damage. They now have {enemy.health} hp left.")
-    if enemy.health == 0:
-        plr.xPos = None
-        plr.yPos = None
-        fight.updateActionButtons("battleWon")
-        out(log, "You Won!")
+    damage = np.clip(attackPower, None, enemy.health)
+    out(log,
+        f"You attack the {enemy.name} for {attackPower} damage. They now have {enemy.health - damage} hp left.")
+    enemy.loseHealth(fight, damage)
 
 
 def out(log, text):
@@ -327,9 +394,8 @@ def out(log, text):
     log.see("end")
     log.configure(state="disabled")
 
-
-def gameOver(fight):
-    plr = fight.plr
-    out(fight.log, "You died! Game Over")
-    fight.grid[plr.xPos][plr.yPos].setCommand(None)
-    fight.updateActionButtons("gameOver")
+# def gameOver(fight):
+#     plr = fight.plr
+#     out(fight.log, "You died! Game Over")
+#     fight.grid[plr.xPos][plr.yPos].setCommand(None)
+#     fight.updateActionButtons("gameOver")
