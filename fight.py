@@ -7,7 +7,8 @@ from tkManager import *
 
 
 class Fight:
-    def __init__(self, frame, backCommand, plr):
+    def __init__(self, w, frame, backCommand, plr):
+        self.w = w
         self.frame = frame
         self.backButtonArgs = backCommand
         self.grid = []
@@ -40,6 +41,16 @@ class Fight:
               - "enemyTurn"    -> It's the player's turn (no actions should be enabled)
               - "battleWon"    -> The battle is won and only the continue button should be visible
         """
+
+        #  Unbind keys
+        w = self.w
+        w.bind("<Control-a>", "break")
+        w.bind("<Control-q>", "break")
+        w.bind("<Control-w>", "break")
+        w.bind("<Control-m>", "break")
+        w.bind("<Control-e>", "break")
+        w.bind("<space>", "break")
+
         if newState is not None and self.state != "gameOver":
             self.state = newState
         state = self.state
@@ -51,26 +62,42 @@ class Fight:
                                   self.actionButtonFrame)
             if self.plr.actions == 0:
                 attackButton["state"] = tk.DISABLED
+            else:
+                w.bind("<Control-a>", lambda event: showAttackSquares(self))
+                w.bind("<Control-q>", lambda event: showAttackSquares(self))
             attackButton.grid(column=0, row=0, padx=1)
 
             moveButton = Button("Move", lambda: moveAction(self), self.actionButtonFrame)
             if self.plr.movement < 1:
                 moveButton["state"] = tk.DISABLED
+            else:
+                w.bind("<Control-w>", lambda event: moveAction(self))
             moveButton.grid(column=1, row=0, padx=1)
 
             magicButton = Button("Magic", lambda: magicAction(self), self.actionButtonFrame)
             if self.plr.actions == 0:
                 magicButton["state"] = tk.DISABLED
+            else:
+                w.bind("<Control-m>", lambda event: magicAction(self))
+                w.bind("<Control-e>", lambda event: magicAction(self))
             magicButton.grid(column=2, row=0, padx=1)
 
             Button("End Turn", lambda: enemyTurn(self), self.actionButtonFrame).grid(column=3, row=0, padx=1)
+            w.bind("<space>", lambda event: enemyTurn(self))
+
         elif state == "playerMoving":
             Button("Cancel Move", lambda: [cancelMove(self, getCellsInReach(self, self.plr.movementSpeed, self.plr.xPos,
                                                                             self.plr.yPos, "walkable"))], self.actionButtonFrame).grid()
+            w.bind("<Control-w>", lambda event: [cancelMove(self, getCellsInReach(self, self.plr.movementSpeed, self.plr.xPos,
+                                                                                  self.plr.yPos, "walkable"))])
         elif state == "playerAiming":
             Button("Cancel Attack", lambda: [cancelAttack(self)], self.actionButtonFrame).grid()
+            w.bind("<Control-a>", lambda event: cancelAttack(self))
+            w.bind("<Control-q>", lambda event: cancelAttack(self))
+
         elif state == "playerCasting":
             Button("Cancel Cast", lambda: self.updateActionButtons("playerTurn"), self.actionButtonFrame).grid()
+            w.bind("<Control-m>", lambda event: self.updateActionButtons("playerTurn"))
         elif state == "enemyTurn":
             pass
         elif state == "battleWon":
@@ -122,8 +149,8 @@ class GridButton(tk.Button):
         self.grid(column=self.x, row=self.y)
 
 
-def main(frame, backButton, plr):
-    fight = Fight(frame, backButton, plr)
+def main(w, frame, backButton, plr):
+    fight = Fight(w, frame, backButton, plr)
     fight.setup()
     movePlayer(fight, fight.room.width - 1, fight.room.height - 1)
     moveEnemy(fight, 0, 0)

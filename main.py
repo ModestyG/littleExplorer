@@ -90,7 +90,7 @@ def buildRoom():
         clear(magicPage)
         Label(magicPage, "Cannot experiment while in battle.").grid()
         backButton = ("Continue", describeRoom)
-        fight.main(mainPage, backButton, plr)
+        fight.main(w, mainPage, backButton, plr)
 
 
 # Fight functions
@@ -259,26 +259,7 @@ def win():
     Label(w, text="You Win!").grid()
 
 
-#   Start
-
-def debug():
-    plr.weapon = Weapon("Ultra Mega Cheater Sword", 999, "a", 8, "This sword is only to be wielded by cheaters and debuggers")
-    plr.movementSpeed = 5
-    plr.maxHP = 999
-    plr.hp = plr.maxHP
-    plr.runeInv.append(RUNES[2])
-    plr.currentRoom.chestContents.append(WEAPONS[random.randint(0, len(WEAPONS) - 1)])
-    plr.currentRoom.chestContents.append(RUNES[random.randint(1, len(RUNES) - 1)])
-
-
-def main():
-    w.bind("<Key>", keyPressed)
-    bindMain()
-    updateInventoryPage()
-    updateCharacterPage()
-    describeRoom()
-    w.wait_window()
-
+#   Keybinds
 
 def keyPressed(e):
     if e.char == "q":
@@ -306,12 +287,25 @@ def unbindMain():
     w.bind("<Control-Key-3>", "break")
 
 
-def openChestShortcut(e):
-    if plr.hasChestOpen:
-        describeRoom()
-        updateInventoryPage()
-    else:
-        openChest()
+#   Start
+
+def debug():
+    plr.weapon = Weapon("Ultra Mega Cheater Sword", 999, "a", 8, "This sword is only to be wielded by cheaters and debuggers")
+    plr.movementSpeed = 5
+    plr.maxHP = 999
+    plr.hp = plr.maxHP
+    plr.runeInv.append(RUNES[2])
+    plr.currentRoom.chestContents.append(WEAPONS[random.randint(0, len(WEAPONS) - 1)])
+    plr.currentRoom.chestContents.append(RUNES[random.randint(1, len(RUNES) - 1)])
+
+
+def main():
+    w.bind("<Key>", keyPressed)
+    bindMain()
+    updateInventoryPage()
+    updateCharacterPage()
+    describeRoom()
+    w.wait_window()
 
 
 plr = Player()

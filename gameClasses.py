@@ -27,7 +27,6 @@ class Enemy:
         if self.health == 0 and printWin:
             plr.xPos = None
             plr.yPos = None
-            print("eilfhigjdgjo")
             fight.updateActionButtons("battleWon")
 
 
