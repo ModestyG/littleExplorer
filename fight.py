@@ -322,6 +322,22 @@ def moveAction(fight):
         cell.setColor("red")
         cell.setCommand(lambda x=cell.x, y=cell.y: [plr.setMovement(plr.movement - ((plr.xPos - x) ** 2 + (plr.yPos - y) ** 2)),
                                                     cancelMove(fight, cellsInReach), movePlayer(fight, x, y)])
+    if plr.xPos:
+        fight.w.bind("<Left>",
+                     lambda event: [plr.setMovement(plr.movement - 1), cancelMove(fight, cellsInReach), movePlayer(fight, plr.xPos - 1,
+                                                                                                                   plr.yPos)])
+    if len(grid) > plr.xPos + 1:
+        fight.w.bind("<Right>",
+                     lambda event: [plr.setMovement(plr.movement - 1), cancelMove(fight, cellsInReach), movePlayer(fight, plr.xPos + 1,
+                                                                                                                   plr.yPos)])
+    if plr.yPos:
+        fight.w.bind("<Up>",
+                     lambda event: [plr.setMovement(plr.movement - 1), cancelMove(fight, cellsInReach), movePlayer(fight, plr.xPos,
+                                                                                                                   plr.yPos - 1)])
+    if len(grid[0]) > plr.yPos + 1:
+        fight.w.bind("<Down>",
+                     lambda event: [plr.setMovement(plr.movement - 1), cancelMove(fight, cellsInReach), movePlayer(fight, plr.xPos,
+                                                                                                                   plr.yPos + 1)])
 
 
 def getCellsInReach(fight, reach, xStart, yStart, requirement=""):
@@ -339,6 +355,10 @@ def cancelMove(fight, cellsInReach):
     grid = fight.grid
     plr = fight.plr
     fight.updateActionButtons("playerTurn")
+    fight.w.bind("<Left>", "break")
+    fight.w.bind("<Right>", "break")
+    fight.w.bind("<Up>", "break")
+    fight.w.bind("<Down>", "break")
     for cell in cellsInReach:
         cell.setColor("white")
         cell.setCommand(None)
