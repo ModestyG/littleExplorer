@@ -309,5 +309,5 @@ def main():
 
 
 plr = Player()
-debug()
+# debug()
 main()
