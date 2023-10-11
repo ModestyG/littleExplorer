@@ -63,6 +63,7 @@ class Player:
 # Room functions
 
 def describeRoom():
+    bindMain()
     updateMagicPage()
     clear(mainPage)
     Label(mainPage, text=plr.currentRoom.desc).grid()
@@ -73,6 +74,7 @@ def describeRoom():
 
 
 def buildRoom():
+    unbindMain()
     room = Room(desc=ROOM_DESCRIPTIONS[random.randint(0, len(ROOM_DESCRIPTIONS) - 1)])
     room.enemy = deepcopy(ENEMIES[random.randint(0, len(ENEMIES) - 1)])
     room.chestContents.append(WEAPONS[random.randint(0, len(WEAPONS) - 1)])
@@ -88,7 +90,7 @@ def buildRoom():
         clear(magicPage)
         Label(magicPage, "Cannot experiment while in battle.").grid()
         backButton = ("Continue", describeRoom)
-        fight.main(mainPage, backButton, plr)
+        fight.main(w, mainPage, backButton, plr)
 
 
 # Fight functions
@@ -104,13 +106,21 @@ def encounterTrap():
 
 def openChest():
     plr.hasChestOpen = True
+    w.bind("<Control-f>", lambda event: [describeRoom(), updateInventoryPage()])
     clear(mainPage)
     if len(plr.currentRoom.chestContents) > 0:
         for item in plr.currentRoom.chestContents:
             Button("- " + item.name, lambda i=item: [takeItem(i), openChest()], mainPage).grid()
     else:
         Label(mainPage, "This chest is empty").grid()
+    w.bind("<space>", lambda event: takeAll())
     Button("Back", lambda: [describeRoom(), updateInventoryPage()], mainPage).grid()
+
+
+def takeAll():
+    for i in range(len(plr.currentRoom.chestContents)):
+        takeItem(plr.currentRoom.chestContents[i - 1])
+    openChest()
 
 
 def takeItem(item):
@@ -249,6 +259,34 @@ def win():
     Label(w, text="You Win!").grid()
 
 
+#   Keybinds
+
+def keyPressed(e):
+    if e.char == "q":
+        notebook.select(mainPage)
+    elif e.char == "w" or e.char == "c":
+        notebook.select(characterPage)
+    elif e.char == "e" or e.char == "i":
+        notebook.select(inventoryPage)
+    elif e.char == "r" or e.char == "m":
+        notebook.select(magicPage)
+
+
+def bindMain():
+    w.bind("<Control-f>", lambda event: openChest())
+    w.bind("<Control-Key-1>", lambda event: buildRoom())
+    w.bind("<Control-Key-2>", lambda event: buildRoom())
+    w.bind("<Control-Key-3>", lambda event: buildRoom())
+
+
+def unbindMain():
+    w.bind("<Control-f>", "break")
+    w.bind("<space>", "break")
+    w.bind("<Control-Key-1>", "break")
+    w.bind("<Control-Key-2>", "break")
+    w.bind("<Control-Key-3>", "break")
+
+
 #   Start
 
 def debug():
@@ -257,9 +295,13 @@ def debug():
     plr.maxHP = 999
     plr.hp = plr.maxHP
     plr.runeInv.append(RUNES[2])
+    plr.currentRoom.chestContents.append(WEAPONS[random.randint(0, len(WEAPONS) - 1)])
+    plr.currentRoom.chestContents.append(RUNES[random.randint(1, len(RUNES) - 1)])
 
 
 def main():
+    w.bind("<Key>", keyPressed)
+    bindMain()
     updateInventoryPage()
     updateCharacterPage()
     describeRoom()
