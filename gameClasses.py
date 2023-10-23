@@ -1,5 +1,7 @@
 import numpy as np
 
+from miscFunctions import Vector2
+
 
 class Room:
     def __init__(self, desc="", enemy=None):
@@ -15,8 +17,7 @@ class Enemy:
         self.name = name
         self.strength = strength
         self.article = article  # The article that precedes the enemy's name (ex: {A} rat approaches you)
-        self.xPos = None
-        self.yPos = None
+        self.pos = Vector2(None, None)
         self.movementSpeed = 3
         self.health = health
         self.reach = reach

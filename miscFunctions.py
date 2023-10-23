@@ -19,7 +19,7 @@ class Vector2:
 
     def __add__(self, other):
         if type(other) == Vector2:
-            return other.x + self.x, other.y + self.y
+            return Vector2(other.x + self.x, other.y + self.y)
         elif type(other) == tuple and len(other) == 2:
             return Vector2(other[0] + self.x, other[1] + self.y)
         else:
@@ -41,6 +41,10 @@ class Vector2:
 
     def __repr__(self):
         return f"({self.x}, {self.y})"
+
+    def set(self, x, y):
+        self.x = x
+        self.y = y
 
 
 def getOrientation(var1, var2):  # Returns 1, 0, or -1
@@ -64,11 +68,14 @@ def getOrientation(var1, var2):  # Returns 1, 0, or -1
 def getDistance(pos1, pos2):
     """
     Calculates the distance between two points
-    :param pos1: tuple(x, y)
-    :param pos2: tuple(x, y)
+    :param pos1: Vector2(x, y)
+    :param pos2: Vector2(x, y)
     :return: distance: float
     """
-    return sqrt((pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2)
+    if type(pos1) == tuple:
+        return sqrt((pos1[0] - pos2[0] ** 2) + (pos1[1] - pos2[1] ** 2))
+    else:
+        return sqrt((pos1.x - pos2.x) ** 2 + (pos1.y - pos2.y) ** 2)
 
 
 def error(text):

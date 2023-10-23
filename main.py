@@ -44,7 +44,7 @@ class Player:
         self.hasChestOpen = False
         self.currentRoom = Room("Starting Room")
         self.movementSpeed = 3.5
-        self.pos = Vector2(1, 0)
+        self.pos = Vector2(None, None)
 
         self.actions = 0
         self.movement = self.movementSpeed
@@ -67,7 +67,6 @@ class Player:
 # Room functions
 
 def describeRoom():
-    print((1, 2) - plr.pos)
     bindMain()
     updateMagicPage()
     clear(mainPage)
