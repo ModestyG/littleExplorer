@@ -2,6 +2,7 @@ import math
 
 import numpy as np
 
+from miscFunctions import error, getDistance, Vector2
 from resources import RUNES, SPELLS
 from tkManager import *
 
@@ -29,6 +30,9 @@ class Fight:
         self.actionButtonFrame.grid(column=0, row=1, columnspan=2)
         self.backButtonArgs += (self.actionButtonFrame,)
         self.state = "playerTurn"
+
+    def getCell(self, pos):
+        return self.grid[pos.x][pos.y]
 
     def updateActionButtons(self, newState=None, temporaryFrame=None):
         """
@@ -86,10 +90,9 @@ class Fight:
             w.bind("<space>", lambda event: enemyTurn(self))
 
         elif state == "playerMoving":
-            Button("Cancel Move", lambda: [cancelMove(self, getCellsInReach(self, self.plr.movementSpeed, self.plr.xPos,
-                                                                            self.plr.yPos, "walkable"))], self.actionButtonFrame).grid()
-            w.bind("<Control-w>", lambda event: [cancelMove(self, getCellsInReach(self, self.plr.movementSpeed, self.plr.xPos,
-                                                                                  self.plr.yPos, "walkable"))])
+            Button("Cancel Move", lambda: [cancelMove(self, getCellsInReach(self, self.plr.movementSpeed, self.plr.pos, "walkable"))],
+                   self.actionButtonFrame).grid()
+            w.bind("<Control-w>", lambda event: [cancelMove(self, getCellsInReach(self, self.plr.movementSpeed, self.plr.pos, "walkable"))])
         elif state == "playerAiming":
             Button("Cancel Attack", lambda: [cancelAttack(self)], self.actionButtonFrame).grid()
             w.bind("<Control-a>", lambda event: cancelAttack(self))
@@ -103,6 +106,7 @@ class Fight:
         elif state == "battleWon":
             out(self.log, "You Won!")
             Button(*self.backButtonArgs).grid()
+            self.plr.pos = Vector2(None, None)
         elif state == "gameOver":
             Label(self.frame, "Game Over!").grid()
         else:
@@ -116,8 +120,7 @@ class GridButton(tk.Button):
 
     def __init__(self, parent, x, y):
         self.parent = parent
-        self.x = x
-        self.y = y
+        self.pos = Vector2(x, y)
         self.width = 2
         self.inPlayerReachRange = False
         self.inEnemyReachRange = False
@@ -142,18 +145,18 @@ class GridButton(tk.Button):
 
     def setColor(self, text):
         super().__init__(self.parent, background=text, command=self.cget("command"), **self.kwargs)
-        self.grid(column=self.x, row=self.y)
+        self.grid(column=self.pos.x, row=self.pos.y)
 
     def setCommand(self, command):
         super().__init__(self.parent, background=self.cget("background"), command=command, **self.kwargs)
-        self.grid(column=self.x, row=self.y)
+        self.grid(column=self.pos.x, row=self.pos.y)
 
 
 def main(w, frame, backButton, plr):
     fight = Fight(w, frame, backButton, plr)
     fight.setup()
-    movePlayer(fight, fight.room.width - 1, fight.room.height - 1)
-    moveEnemy(fight, 0, 0)
+    movePlayer(fight, Vector2(fight.room.width - 1, fight.room.height - 1))
+    moveEnemy(fight, Vector2(0, 0))
     plr.actions = 1
     plr.movement = plr.movementSpeed
     out(fight.log, f"You encounter {fight.enemy.article} {fight.enemy.name}!")
@@ -175,8 +178,8 @@ def createGrid(room, frame):
 def enemyTurn(fight):
     enemy = fight.enemy
     fight.updateActionButtons("enemyTurn")
-    moveTowardsPlayer(fight, *getDesiredPos(fight))
-    for _ in getCellsInReach(fight, enemy.reach, enemy.xPos, enemy.yPos, "player"):
+    moveTowardsPlayer(fight, getDesiredPos(fight))
+    for _ in getCellsInReach(fight, enemy.reach, enemy.pos, "player"):
         attackPlayer(fight)
     fight.plr.actions = 1
     fight.plr.movement = fight.plr.movementSpeed
@@ -192,38 +195,32 @@ def attackPlayer(fight):
 
 
 def getDesiredPos(fight):
-    x = 0
-    y = 0
+    output = Vector2(0, 0)
     enemy = fight.enemy
     plr = fight.plr
-    closestCell = fight.grid[enemy.xPos][enemy.yPos]
-    for cell in getCellsInReach(fight, enemy.reach, enemy.xPos, enemy.yPos):
+    closestCell = fight.getCell(enemy.pos)
+    for cell in getCellsInReach(fight, enemy.reach, enemy.pos):
         if cell.states["player"]:
-            closestCells = [fight.grid[plr.xPos][plr.yPos]]
-            for c in getCellsInReach(fight, enemy.reach, plr.xPos, plr.yPos):
-                if (plr.xPos - c.x) ** 2 + (plr.yPos - c.y) ** 2 > (plr.xPos - closestCells[0].x) ** 2 + (
-                        plr.yPos - closestCells[0].y) ** 2:
+            closestCells = [fight.getCell(plr.pos)]
+            for c in getCellsInReach(fight, enemy.reach, plr.pos):
+                if getDistance(plr.pos, c.pos) > getDistance(plr.pos, closestCells[0].pos):
                     closestCells.clear()
                     closestCells.append(c)
-                if (plr.xPos - c.x) ** 2 + (plr.yPos - c.y) ** 2 == (plr.xPos - closestCells[0].x) ** 2 + (
-                        plr.yPos - closestCells[0].y) ** 2:
+                elif getDistance(plr.pos, c.pos) == getDistance(plr.pos, closestCells[0].pos):
                     closestCells.append(c)
             closestCell = closestCells[0]
+
             for c in closestCells:
-                if (enemy.xPos - c.x) ** 2 + (enemy.yPos - c.y) ** 2 < (enemy.xPos - closestCell.x) ** 2 + (
-                        enemy.yPos - closestCell.y) ** 2:
+                if getDistance(enemy.pos, c.pos) < getDistance(enemy.pos, closestCell.pos):
                     closestCell = c
-                x = closestCell.x
-                y = closestCell.y
+                output = closestCell.pos
             break
         if cell.states["walkable"] or cell.states["enemy"]:
-            if (plr.xPos - cell.x) ** 2 + (plr.yPos - cell.y) ** 2 < (plr.xPos - closestCell.x) ** 2 + (plr.yPos - closestCell.y) ** 2:
+            if getDistance(plr.pos, cell.pos) < getDistance(plr.pos, closestCell.pos):
                 closestCell = cell
-            xDiff = enemy.xPos - closestCell.x
-            yDiff = enemy.yPos - closestCell.y
-            x = plr.xPos + xDiff
-            y = plr.yPos + yDiff
-    return x, y
+            diff = enemy.pos - closestCell.pos
+            output = plr.pos + diff
+    return output
 
 
 def addRune(fight, rune):
@@ -283,8 +280,7 @@ def castSpell(fight, magicFrame):
     if executionOutput:
         out(fight.log, executionOutput)
     if fight.enemy.health == 0:
-        fight.plr.xPos = None
-        fight.plr.yPos = None
+        fight.plr.setPos(None, None)
         fight.updateActionButtons("battleWon")
     else:
         fight.updateActionButtons()
@@ -292,22 +288,20 @@ def castSpell(fight, magicFrame):
     clear(magicFrame)
 
 
-def movePlayer(fight, x, y):
-    grid = fight.grid
+def movePlayer(fight, pos):
     plr = fight.plr
-    if plr.xPos is not None:
-        grid[plr.xPos][plr.yPos].setColor("white")
-        grid[plr.xPos][plr.yPos].setCommand(None)
-        grid[plr.xPos][plr.yPos].states["walkable"] = True
-        grid[plr.xPos][plr.yPos].states["player"] = False
-        grid[plr.xPos][plr.yPos].remove(plr)
-    plr.xPos = x
-    plr.yPos = y
-    grid[x][y].setColor("blue")
-    grid[x][y].setCommand(lambda: moveAction(fight))
-    grid[x][y].states["walkable"] = False
-    grid[x][y].states["player"] = True
-    grid[x][y].append(plr)
+    if plr.pos.x is not None:
+        fight.getCell(plr.pos).setColor("white")
+        fight.getCell(plr.pos).setCommand(None)
+        fight.getCell(plr.pos).states["walkable"] = True
+        fight.getCell(plr.pos).states["player"] = False
+        # fight.getCell(plr.pos).remove(plr)
+    plr.pos = pos
+    fight.getCell(pos).setColor("blue")
+    fight.getCell(pos).setCommand(lambda: moveAction(fight))
+    fight.getCell(pos).states["walkable"] = False
+    fight.getCell(pos).states["player"] = True
+    fight.getCell(pos).append(plr)
 
 
 def moveAction(fight):
@@ -316,43 +310,42 @@ def moveAction(fight):
     fight.updateActionButtons("playerMoving")
     grid = fight.grid
     plr = fight.plr
-    cellsInReach = getCellsInReach(fight, plr.movement, plr.xPos, plr.yPos, "walkable")
-    grid[plr.xPos][plr.yPos].setCommand(lambda: cancelMove(fight, cellsInReach))
+    cellsInReach = getCellsInReach(fight, plr.movement, plr.pos, "walkable")
+    fight.getCell(plr.pos).setCommand(lambda: cancelMove(fight, cellsInReach))
     for cell in cellsInReach:
         cell.setColor("red")
-        cell.setCommand(lambda x=cell.x, y=cell.y: [plr.setMovement(plr.movement - ((plr.xPos - x) ** 2 + (plr.yPos - y) ** 2)),
-                                                    cancelMove(fight, cellsInReach), movePlayer(fight, x, y)])
-    if plr.xPos:
+        cell.setCommand(lambda cellPos=cell.pos: [plr.setMovement(plr.movement - getDistance(plr.pos, cellPos)),
+                                                  cancelMove(fight, cellsInReach), movePlayer(fight, cellPos)])
+    if plr.pos.x:
         fight.w.bind("<Left>",
-                     lambda event: [plr.setMovement(plr.movement - 1), cancelMove(fight, cellsInReach), movePlayer(fight, plr.xPos - 1,
-                                                                                                                   plr.yPos)])
-    if len(grid) > plr.xPos + 1:
+                     lambda event: [plr.setMovement(plr.movement - 1), cancelMove(fight, cellsInReach),
+                                    movePlayer(fight, plr.pos - (1, 0))])
+    if len(grid) > plr.pos.x + 1:
         fight.w.bind("<Right>",
-                     lambda event: [plr.setMovement(plr.movement - 1), cancelMove(fight, cellsInReach), movePlayer(fight, plr.xPos + 1,
-                                                                                                                   plr.yPos)])
-    if plr.yPos:
+                     lambda event: [plr.setMovement(plr.movement - 1), cancelMove(fight, cellsInReach),
+                                    movePlayer(fight, plr.pos + (1, 0))])
+    if plr.pos.y:
         fight.w.bind("<Up>",
-                     lambda event: [plr.setMovement(plr.movement - 1), cancelMove(fight, cellsInReach), movePlayer(fight, plr.xPos,
-                                                                                                                   plr.yPos - 1)])
-    if len(grid[0]) > plr.yPos + 1:
+                     lambda event: [plr.setMovement(plr.movement - 1), cancelMove(fight, cellsInReach),
+                                    movePlayer(fight, plr.pos - (0, 1))])
+    if len(grid[0]) > plr.pos.y + 1:
         fight.w.bind("<Down>",
-                     lambda event: [plr.setMovement(plr.movement - 1), cancelMove(fight, cellsInReach), movePlayer(fight, plr.xPos,
-                                                                                                                   plr.yPos + 1)])
+                     lambda event: [plr.setMovement(plr.movement - 1), cancelMove(fight, cellsInReach),
+                                    movePlayer(fight, plr.pos + (0, 1))])
 
 
-def getCellsInReach(fight, reach, xStart, yStart, requirement=""):
+def getCellsInReach(fight, reach, startPos, requirement=""):
     grid = fight.grid
     room = fight.room
     cells = []
-    for column in grid[np.clip(xStart - math.ceil(reach), 0, None):np.clip(xStart + math.ceil(reach) + 1, None, room.width)]:
-        for cell in column[np.clip(yStart - math.ceil(reach), 0, None):np.clip(yStart + math.ceil(reach) + 1, None, room.height)]:
-            if ((xStart - cell.x) ** 2 + (yStart - cell.y) ** 2 <= reach ** 2) and cell.states[requirement]:
+    for column in grid[np.clip(startPos.x - math.ceil(reach), 0, None):np.clip(startPos.x + math.ceil(reach) + 1, None, room.width)]:
+        for cell in column[np.clip(startPos.y - math.ceil(reach), 0, None):np.clip(startPos.y + math.ceil(reach) + 1, None, room.height)]:
+            if (getDistance(startPos, cell.pos) <= reach) and cell.states[requirement]:
                 cells.append(cell)
     return cells
 
 
 def cancelMove(fight, cellsInReach):
-    grid = fight.grid
     plr = fight.plr
     fight.updateActionButtons("playerTurn")
     fight.w.bind("<Left>", "break")
@@ -362,58 +355,54 @@ def cancelMove(fight, cellsInReach):
     for cell in cellsInReach:
         cell.setColor("white")
         cell.setCommand(None)
-    grid[plr.xPos][plr.yPos].setCommand(lambda: moveAction(fight))
+    fight.getCell(plr.pos).setCommand(lambda: moveAction(fight))
 
 
 def cancelAttack(fight):
-    grid = fight.grid
     plr = fight.plr
     fight.updateActionButtons("playerTurn")
-    emptyAttackSquares = getCellsInReach(fight, fight.plr.weapon.reach, fight.plr.xPos,
-                                         fight.plr.yPos, "walkable")
-    attackSquaresWithEnemy = getCellsInReach(fight, fight.plr.weapon.reach, fight.plr.xPos,
-                                             fight.plr.yPos, "enemy")
+    emptyAttackSquares = getCellsInReach(fight, fight.plr.weapon.reach, plr.pos, "walkable")
+    attackSquaresWithEnemy = getCellsInReach(fight, fight.plr.weapon.reach, fight.plr.pos, "enemy")
     for cell in emptyAttackSquares:
         cell.setColor("white")
         cell.setCommand(None)
     for cell in attackSquaresWithEnemy:
         cell.setColor("green")
         cell.setCommand(None)
-    grid[plr.xPos][plr.yPos].setCommand(lambda: moveAction(fight))
+    fight.getCell(plr.pos).setCommand(lambda: moveAction(fight))
 
 
-def moveTowardsPlayer(fight, x=0, y=0):
+def moveTowardsPlayer(fight, targetPos):
     grid = fight.grid
     enemy = fight.enemy
-    if (x, y) != (enemy.xPos, enemy.yPos):
-        grid[enemy.xPos][enemy.yPos].setColor("white")
-        grid[enemy.xPos][enemy.yPos].setCommand(None)
-        grid[enemy.xPos][enemy.yPos].states["walkable"] = True
-        grid[enemy.xPos][enemy.yPos].states["enemy"] = False
+    if targetPos != enemy.pos:
+        fight.getCell(enemy.pos).setColor("white")
+        fight.getCell(enemy.pos).setCommand(None)
+        fight.getCell(enemy.pos).states["walkable"] = True
+        fight.getCell(enemy.pos).states["enemy"] = False
 
         targetCell = grid[0][0]
-        for cell in getCellsInReach(fight, enemy.movementSpeed, enemy.xPos, enemy.yPos, "walkable"):
-            if (x - cell.x) ** 2 + (y - cell.y) ** 2 < (x - targetCell.x) ** 2 + (y - targetCell.y) ** 2:
+        for cell in getCellsInReach(fight, enemy.movementSpeed, enemy.pos, "walkable"):
+            if getDistance(targetPos, cell.pos) < getDistance(targetPos, targetCell.pos):
                 targetCell = cell
 
-        moveEnemy(fight, targetCell.x, targetCell.y)
+        moveEnemy(fight, targetCell.pos)
 
 
-def moveEnemy(fight, x, y):
+def moveEnemy(fight, pos):
     enemy = fight.enemy
     grid = fight.grid
-    enemy.xPos = x
-    enemy.yPos = y
-    grid[x][y].setColor("green")
-    grid[x][y].states["walkable"] = False
-    grid[x][y].states["enemy"] = True
+    enemy.pos = pos
+    fight.getCell(pos).setColor("green")
+    fight.getCell(pos).states["walkable"] = False
+    fight.getCell(pos).states["enemy"] = True
 
 
 def showAttackSquares(fight):
     fight.updateActionButtons("playerAiming")
     plr = fight.plr
-    cells = getCellsInReach(fight, plr.weapon.reach, plr.xPos, plr.yPos, "walkable")
-    enemyCells = getCellsInReach(fight, plr.weapon.reach, plr.xPos, plr.yPos, "enemy")
+    cells = getCellsInReach(fight, plr.weapon.reach, plr.pos, "walkable")
+    enemyCells = getCellsInReach(fight, plr.weapon.reach, plr.pos, "enemy")
     for cell in enemyCells:
         cell.setColor("SeaGreen3")
         cell.setCommand(lambda: [attackEnemy(fight)])

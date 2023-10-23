@@ -6,6 +6,7 @@ from copy import deepcopy
 import fight
 import resources
 from gameClasses import *
+from miscFunctions import Vector2
 from tkManager import *
 
 #   Import resources
@@ -43,8 +44,7 @@ class Player:
         self.hasChestOpen = False
         self.currentRoom = Room("Starting Room")
         self.movementSpeed = 3.5
-        self.xPos = None
-        self.yPos = None
+        self.pos = Vector2(None, None)
 
         self.actions = 0
         self.movement = self.movementSpeed
@@ -58,6 +58,10 @@ class Player:
 
     def setMovement(self, amount):
         self.movement = amount
+
+    def setPos(self, x, y):
+        self.pos.x = x
+        self.pos.y = y
 
 
 # Room functions
