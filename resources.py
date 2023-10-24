@@ -2,16 +2,16 @@ from gameClasses import *
 from spellFunctions import *
 
 ENEMIES = [
-    Enemy("Spider", 1, "a", 1),
-    Enemy("Rat", 1, "a", 2),
-    Enemy("Goblin", 2, "a", 5),
-    Enemy("Dragon", 100, "a", 500)
+    Enemy("Spider", 1, "a", 1, 1),
+    Enemy("Rat", 1, "a", 2, 1),
+    Enemy("Goblin", 2, "a", 5, 2),
+    Enemy("Dragon", 100, "a", 500, 20)
 ]
 
 WEAPONS = [
-    Weapon("Dagger", 1, "a", 1.5, "A small but sharp dagger."),
-    Weapon("Sword", 3, "a", 2, "A large sword to swing at your enemies."),
-    Weapon("Bow", 3, "a", 8, "A basic bow.")
+    Weapon("Dagger", 1, "a", 1, 1.5, "A small but sharp dagger."),
+    Weapon("Sword", 3, "a", 2, 2, "A large sword to swing at your enemies."),
+    Weapon("Bow", 3, "a", 2.5, 8, "A basic bow.")
 ]
 
 ROOM_DESCRIPTIONS = [
@@ -22,9 +22,9 @@ ROOM_DESCRIPTIONS = [
 ]
 
 RUNES = [
-    Rune("None", 0),
-    Rune("Frost Rune", 1, "ice.png"),
-    Rune("Fire Rune", 2, "fire.png")
+    Rune("None", 0, 0),
+    Rune("Frost Rune", 1, 1, "ice.png"),
+    Rune("Fire Rune", 2, 1, "fire.png")
 ]
 
 SPELLS = {

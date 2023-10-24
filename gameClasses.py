@@ -13,13 +13,14 @@ class Room:
 
 
 class Enemy:
-    def __init__(self, name, strength, article, health, reach=3):
+    def __init__(self, name, strength, article, health, cr=0, reach=3):
         self.name = name
         self.strength = strength
         self.article = article  # The article that precedes the enemy's name (ex: {A} rat approaches you)
         self.pos = Vector2(None, None)
         self.movementSpeed = 3
         self.health = health
+        self.cr = cr
         self.reach = reach
 
     def loseHealth(self, fight, amount=1, printWin=True):
@@ -30,20 +31,25 @@ class Enemy:
             plr.yPos = None
             fight.updateActionButtons("battleWon")
 
+    def __repr__(self):
+        return "{" + self.name + "}"
+
 
 class Weapon:
-    def __init__(self, name, strBonus, article, reach=1, desc=""):
+    def __init__(self, name, strBonus, article, itemRating=0, reach=1, desc=""):
         self.name = name
         self.strBonus = strBonus
         self.article = article  # The article that precedes the weapon's name (ex: You found {a} dagger)
+        self.ir = itemRating
         self.desc = desc
         self.reach = reach
 
 
 class Rune:
-    def __init__(self, name, runeId, image="placeholder.png"):
+    def __init__(self, name, runeId, itemRating=0, image="placeholder.png"):
         self.name = name
         self.id = runeId
+        self.ir = itemRating
         self.image = image
         self.desc = "A stone tablet with a glowing engraving."
 

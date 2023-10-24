@@ -16,6 +16,8 @@ ROOM_DESCRIPTIONS = resources.ROOM_DESCRIPTIONS
 RUNES = resources.RUNES
 SPELLS = resources.SPELLS
 
+ITEMS = WEAPONS + RUNES[1:]
+
 #   Setup game UI
 w = createGameWindow()
 
@@ -37,8 +39,8 @@ class Player:
         self.inv = []
         self.runeInv = []
         self.invSize = 5
-        self.weapon = Weapon("Hand-wraps", 0, "", 1, "Flimsy bandages that protect your fists while boxing. Not very "
-                                                     "useful.")
+        self.weapon = Weapon("Hand-wraps", 0, "", 0, 1, "Flimsy bandages that protect your fists while boxing. Not very "
+                                                        "useful.")
         self.name = name
         self.maxHP = maxHP
         self.hasChestOpen = False
@@ -80,14 +82,14 @@ def describeRoom():
 def buildRoom():
     unbindMain()
     room = Room(desc=ROOM_DESCRIPTIONS[random.randint(0, len(ROOM_DESCRIPTIONS) - 1)])
-    room.enemy = deepcopy(ENEMIES[random.randint(0, len(ENEMIES) - 1)])
-    room.chestContents.append(WEAPONS[random.randint(0, len(WEAPONS) - 1)])
-    room.chestContents.append(RUNES[random.randint(1, len(RUNES) - 1)])
     room.width = random.randint(3, 15)
     room.height = random.randint(5, 15)
+    summonEnemy(room)
+    fillChest(room)
     plr.currentRoom = room
+    plr.lv += 1
 
-    if random.randint(0, 5) == 1:
+    if random.randint(0, 20) == 1:
         encounterTrap()
     else:
         clear(mainPage)
@@ -99,6 +101,16 @@ def buildRoom():
 
 # Fight functions
 
+def summonEnemy(room):
+    weights = []
+    for enemy in ENEMIES:
+        weight = 100 / ((enemy.cr - plr.lv) ** 2 + 1)
+        if enemy.cr > plr.lv:
+            weight /= 2
+        weights.append(weight)
+    room.enemy = deepcopy(*random.choices(ENEMIES, weights))
+
+
 def encounterTrap():
     clear(mainPage)
     Label(mainPage, text="You run into a trap and lose 1 health!").grid()
@@ -107,6 +119,15 @@ def encounterTrap():
 
 
 # Inventory/Chest functions
+
+def fillChest(room):
+    points = plr.lv
+    while points >= 1:
+        item = ITEMS[random.randint(0, len(ITEMS) - 1)]
+        if item.ir <= points:
+            points -= item.ir
+            room.chestContents.append(item)
+
 
 def openChest():
     plr.hasChestOpen = True
@@ -123,7 +144,7 @@ def openChest():
 
 def takeAll():
     for i in range(len(plr.currentRoom.chestContents)):
-        takeItem(plr.currentRoom.chestContents[i - 1])
+        takeItem(plr.currentRoom.chestContents[0])
     openChest()
 
 
@@ -294,8 +315,10 @@ def unbindMain():
 #   Start
 
 def debug():
-    plr.weapon = Weapon("Ultra Mega Cheater Sword", 999, "a", 8, "This sword is only to be wielded by cheaters and debuggers")
+    plr.weapon = Weapon("Ultra Mega Cheater Sword", strBonus=999, article="a", reach=8,
+                        desc="This sword is only to be wielded by cheaters and debuggers")
     plr.movementSpeed = 5
+    plr.lv = 20
     plr.maxHP = 999
     plr.hp = plr.maxHP
     plr.runeInv.append(RUNES[2])
