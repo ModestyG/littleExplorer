@@ -259,6 +259,7 @@ def magicAction(fight):
 
 
 def castSpell(fight, magicFrame):
+    fight.plr.actions -= 1
     fight.updateActionButtons("playerTurn")
     runeSlotIds = ""
     for rune in fight.runeSlots:
@@ -284,7 +285,6 @@ def castSpell(fight, magicFrame):
         fight.updateActionButtons("battleWon")
     else:
         fight.updateActionButtons()
-    fight.plr.actions -= 1
     clear(magicFrame)
 
 

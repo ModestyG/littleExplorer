@@ -2,16 +2,34 @@ from gameClasses import *
 from spellFunctions import *
 
 ENEMIES = [
-    Enemy("Spider", 1, "a", 1, 1),
-    Enemy("Rat", 1, "a", 2, 1),
-    Enemy("Goblin", 2, "a", 5, 2),
-    Enemy("Dragon", 100, "a", 500, 20)
+    Enemy("Spider", strength=1, article="a", health=1, reach=2, cr=2),
+    Enemy("Rat", strength=1, article="a", health=2, reach=1.5, movement=4, cr=4),
+    Enemy("Boar", strength=1.5, article="a wild", health=3, reach=2, movement=4, cr=18),
+    Enemy("Goblin", strength=1.5, article="a", health=5, reach=3, cr=20),
+    Enemy("Bees", strength=0.5, article="a swarm of", health=10, reach=1, movement=6, cr=30),
+    Enemy("Slime", strength=0.5, article="a", health=5, reach=2, movement=7, cr=30),
+    Enemy("Rogue", strength=3, article="a knife-wielding", health=8, reach=1.5, cr=50),
+    Enemy("Knight", strength=4, article="a", health=15, reach=2, cr=70),
+    Enemy("Rogue", strength=3, article="a bow-wielding", health=8, reach=8, cr=80),
+    Enemy("Possessed Armour", strength=4, article="a", health=25, reach=2, cr=80),
+    Enemy("Undead Mage", strength=6, article="an", health=8, reach=5, cr=80),
+    Enemy("Possessed Armour", strength=4, article="a bow-wielding", health=15, reach=8, cr=100),
+    Enemy("Ice Dragon", strength=80, article="an", health=600, reach=5, cr=500),
+    Enemy("Fire Dragon", strength=100, article="a", health=500, reach=5, cr=550),
+    Enemy("God", strength=1000, article="", health=10000, reach=10, cr=1000),
 ]
 
 WEAPONS = [
-    Weapon("Dagger", 1, "a", 1, 1.5, "A small but sharp dagger."),
-    Weapon("Sword", 3, "a", 2, 2, "A large sword to swing at your enemies."),
-    Weapon("Bow", 3, "a", 2.5, 8, "A basic bow.")
+    Weapon(name="Dagger", strBonus=1, article="a", reach=1.5, desc="A small but sharp dagger.", itemRating=3),
+    Weapon(name="Wooden Club", strBonus=1, article="a", reach=2, desc="A glorified stick.", itemRating=5),
+    Weapon(name="Shortsword", strBonus=2.5, article="a", reach=2, desc="Truly the inferior type of sword. Good for people with noodle "
+                                                                       "arms.", itemRating=20),
+    Weapon(name="Silver warhammer", strBonus=3, article="a", reach=2, desc="A silver warhammer with copper decour.", itemRating=30),
+    Weapon(name="Longsword", strBonus=3.5, article="a", reach=3, desc="A large sword to swing at your enemies.", itemRating=45),
+    Weapon(name="Bow", strBonus=3, article="a", reach=8, desc="A basic bow.", itemRating=75),
+    Weapon(name="Gun", strBonus=100, article="a", reach=8, desc="'You're a fool. No weapon forged can stop me.' 'That was then... this is "
+                                                                "now.' I swear this is just a very high-level enchanted artefact.",
+           itemRating=400),
 ]
 
 ROOM_DESCRIPTIONS = [
@@ -22,9 +40,9 @@ ROOM_DESCRIPTIONS = [
 ]
 
 RUNES = [
-    Rune("None", 0, 0),
-    Rune("Frost Rune", 1, 1, "ice.png"),
-    Rune("Fire Rune", 2, 1, "fire.png")
+    Rune("None", runeId=0, itemRating=0),
+    Rune("Frost Rune", runeId=1, itemRating=10, image="ice.png"),
+    Rune("Fire Rune", runeId=2, itemRating=10, image="fire.png")
 ]
 
 SPELLS = {
