@@ -52,6 +52,8 @@ class Player:
         self.movement = self.movementSpeed
         self.runeSlots = [RUNES[0], RUNES[0], RUNES[0]]
 
+        self.levelingSpeed = 2
+
     def loseHealth(self, amount=1):
         self.hp -= amount
         updateCharacterPage()
@@ -87,7 +89,7 @@ def buildRoom():
     summonEnemy(room)
     fillChest(room)
     plr.currentRoom = room
-    plr.lv += 1
+    plr.lv += plr.levelingSpeed
 
     if random.randint(0, 20) == 1:
         encounterTrap()
@@ -122,7 +124,7 @@ def encounterTrap():
 
 def fillChest(room):
     points = plr.lv
-    while points >= 1:
+    while points >= 3:
         item = ITEMS[random.randint(0, len(ITEMS) - 1)]
         if item.ir <= points:
             points -= item.ir
@@ -318,7 +320,6 @@ def debug():
     plr.weapon = Weapon("Ultra Mega Cheater Sword", strBonus=999, article="a", reach=8,
                         desc="This sword is only to be wielded by cheaters and debuggers")
     plr.movementSpeed = 5
-    plr.lv = 20
     plr.maxHP = 999
     plr.hp = plr.maxHP
     plr.runeInv.append(RUNES[2])

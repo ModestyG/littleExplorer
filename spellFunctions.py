@@ -17,7 +17,7 @@ def spell_2(args):
     fight = args["fight"]
     plr = fight.plr
     enemy = fight.enemy
-    if getDistance((plr.xPos, plr.yPos), (enemy.xPos, enemy.yPos)) <= 3:
+    if getDistance(plr.pos, enemy.pos) <= 3:
         enemy.loseHealth(fight, np.clip(3, None, enemy.health), False)
         return f"You blast the {enemy.name} with a ball of fire for 3 damage. They now have {enemy.health} left."
     else:

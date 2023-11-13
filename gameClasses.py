@@ -13,12 +13,12 @@ class Room:
 
 
 class Enemy:
-    def __init__(self, name, strength, article, health, cr=0, reach=3):
+    def __init__(self, name, strength, article, health, reach=3, movement=3, cr=1):
         self.name = name
         self.strength = strength
         self.article = article  # The article that precedes the enemy's name (ex: {A} rat approaches you)
         self.pos = Vector2(None, None)
-        self.movementSpeed = 3
+        self.movementSpeed = movement
         self.health = health
         self.cr = cr
         self.reach = reach
