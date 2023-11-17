@@ -35,23 +35,45 @@ class Enemy:
         return "{" + self.name + "}"
 
 
-class Weapon:
-    def __init__(self, name, strBonus, article, itemRating=0, reach=1, desc=""):
+class Item:
+    def __init__(self, name, article, itemRating, desc):
         self.name = name
-        self.strBonus = strBonus
-        self.article = article  # The article that precedes the weapon's name (ex: You found {a} dagger)
+        self.article = article
         self.ir = itemRating
         self.desc = desc
+
+
+class Weapon(Item):
+    def __init__(self, name, strBonus, article, itemRating=0, reach=1, desc=""):
+        self.strBonus = strBonus
         self.reach = reach
+        super().__init__(name, article, itemRating, desc)
 
 
-class Rune:
+class Rune(Item):
     def __init__(self, name, runeId, itemRating=0, image="placeholder.png"):
-        self.name = name
         self.id = runeId
-        self.ir = itemRating
         self.image = image
-        self.desc = "A stone tablet with a glowing engraving."
+        super().__init__(name, "a", itemRating, "A stone tablet with a glowing engraving.")
+
+
+class Effect:
+    def __init__(self, name, function, duration):
+        self.name = name
+        self.duration = duration
+        self.function = function
+
+
+class Potion(Item):
+    def __init__(self, name, article, effectName, function, itemRating, desc, effectDesc, duration=None, strength=1):
+        self.effect = Effect(effectName, function, duration)
+        self.effectDesc = effectDesc
+        super().__init__(name, article, itemRating, desc)
+
+    def drink(self, plr):
+        if self.effect.duration is not None:
+            plr.effects.append(self.effect)
+        self.effect.function(plr)
 
 
 class Spell:

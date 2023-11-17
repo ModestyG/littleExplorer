@@ -14,9 +14,10 @@ ENEMIES = resources.ENEMIES
 WEAPONS = resources.WEAPONS
 ROOM_DESCRIPTIONS = resources.ROOM_DESCRIPTIONS
 RUNES = resources.RUNES
+POTIONS = resources.POTIONS
 SPELLS = resources.SPELLS
 
-ITEMS = WEAPONS + RUNES[1:]
+ITEMS = WEAPONS + RUNES[1:] + POTIONS
 
 #   Setup game UI
 w = createGameWindow()
@@ -45,8 +46,10 @@ class Player:
         self.maxHP = maxHP
         self.hasChestOpen = False
         self.currentRoom = Room("Starting Room")
+        self.actionsPerTurn = 1
         self.movementSpeed = 3.5
         self.pos = Vector2(None, None)
+        self.effects = []
 
         self.actions = 0
         self.movement = self.movementSpeed
@@ -54,8 +57,8 @@ class Player:
 
         self.levelingSpeed = 2
 
-    def loseHealth(self, amount=1):
-        self.hp -= amount
+    def changeHealth(self, amount):
+        self.hp += amount
         updateCharacterPage()
         if self.hp <= 0:
             gameOver()
@@ -116,7 +119,7 @@ def summonEnemy(room):
 def encounterTrap():
     clear(mainPage)
     Label(mainPage, text="You run into a trap and lose 1 health!").grid()
-    plr.loseHealth(1)
+    plr.changeHealth(-1)
     Button("Continue", describeRoom, mainPage).grid()
 
 
@@ -124,7 +127,7 @@ def encounterTrap():
 
 def fillChest(room):
     points = plr.lv
-    while points >= 3:
+    while points >= 2:
         item = ITEMS[random.randint(0, len(ITEMS) - 1)]
         if item.ir <= points:
             points -= item.ir
@@ -190,6 +193,9 @@ def inspectItem(item):
         Label(inventoryPage, f"Attack bonus: {item.strBonus}").grid()
         Label(inventoryPage, f"Range: {item.reach}").grid()
         Button("Equip", lambda: [updateInventoryPage(), equipItem(item)], inventoryPage).grid()
+    if type(item) == Potion:
+        Label(inventoryPage, f"Effect: {item.effectDesc}")
+        Button("Drink", lambda: [item.drink(plr), plr.inv.remove(item), updateInventoryPage()], inventoryPage).grid()
     Button("Put Away", lambda: moveItem(item), inventoryPage).grid()
     Button("Back", lambda: updateInventoryPage(), inventoryPage).grid()
 
@@ -304,6 +310,7 @@ def bindMain():
     w.bind("<Control-Key-1>", lambda event: buildRoom())
     w.bind("<Control-Key-2>", lambda event: buildRoom())
     w.bind("<Control-Key-3>", lambda event: buildRoom())
+    w.bind("<Escape>", lambda event: w.destroy())
 
 
 def unbindMain():
@@ -325,6 +332,7 @@ def debug():
     plr.runeInv.append(RUNES[2])
     plr.currentRoom.chestContents.append(WEAPONS[random.randint(0, len(WEAPONS) - 1)])
     plr.currentRoom.chestContents.append(RUNES[random.randint(1, len(RUNES) - 1)])
+    plr.currentRoom.chestContents.append(POTIONS[4])
 
 
 def main():
