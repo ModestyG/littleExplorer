@@ -105,6 +105,7 @@ class Fight:
             pass
         elif state == "battleWon":
             out(self.log, "You Won!")
+            checkEffects(self.plr, True)
             Button(*self.backButtonArgs).grid()
             self.plr.pos = Vector2(None, None)
         elif state == "gameOver":
@@ -157,7 +158,7 @@ def main(w, frame, backButton, plr):
     fight.setup()
     movePlayer(fight, Vector2(fight.room.width - 1, fight.room.height - 1))
     moveEnemy(fight, Vector2(0, 0))
-    plr.actions = 1
+    plr.actions = plr.actionsPerTurn
     plr.movement = plr.movementSpeed
     out(fight.log, f"You encounter {fight.enemy.article} {fight.enemy.name}!")
     fight.updateActionButtons()
@@ -177,20 +178,37 @@ def createGrid(room, frame):
 
 def enemyTurn(fight):
     enemy = fight.enemy
+    plr = fight.plr
     fight.updateActionButtons("enemyTurn")
     moveTowardsPlayer(fight, getDesiredPos(fight))
     for _ in getCellsInReach(fight, enemy.reach, enemy.pos, "player"):
         attackPlayer(fight)
-    fight.plr.actions = 1
-    fight.plr.movement = fight.plr.movementSpeed
+    checkEffects(fight)
+    plr.actions = plr.actionsPerTurn
+    plr.movement = plr.movementSpeed
     fight.updateActionButtons("playerTurn")
+
+
+def checkEffects(fight, endBattle=False):
+    plr = fight.plr
+    for effect in plr.effects:
+        if endBattle:
+            out(fight.log, f"Your {effect.name} effect ends as the adrenaline leaves your veins.")
+            effect.function(plr, False)
+            plr.effects.remove(effect)
+        if effect.duration > 0:
+            effect.duration -= 1
+            if not effect.duration:
+                out(fight.log, effect.name + " fades.")
+                effect.function(plr, False)
+                plr.effects.remove(effect)
 
 
 def attackPlayer(fight):
     plr = fight.plr
     log = fight.log
     enemy = fight.enemy
-    plr.loseHealth(np.clip(enemy.strength, None, plr.hp))
+    plr.changeHealth(-np.clip(enemy.strength, None, plr.hp))
     out(log, f"The {enemy.name} attack you for {enemy.strength} damage. You now have {plr.hp} hp left.")
 
 

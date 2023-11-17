@@ -20,6 +20,8 @@ ENEMIES = [
 ]
 
 WEAPONS = [
+    Weapon(name="Stick", strBonus=0, article="a", reach=1.5, desc="A stick. Maybe if you hit the enemy REALLY hard it will leave a mark",
+           itemRating=3),
     Weapon(name="Dagger", strBonus=1, article="a", reach=1.5, desc="A small but sharp dagger.", itemRating=3),
     Weapon(name="Wooden Club", strBonus=1, article="a", reach=2, desc="A glorified stick.", itemRating=5),
     Weapon(name="Shortsword", strBonus=2.5, article="a", reach=2, desc="Truly the inferior type of sword. Good for people with noodle "
@@ -30,6 +32,43 @@ WEAPONS = [
     Weapon(name="Gun", strBonus=100, article="a", reach=8, desc="'You're a fool. No weapon forged can stop me.' 'That was then... this is "
                                                                 "now.' I swear this is just a very high-level enchanted artefact.",
            itemRating=400),
+]
+
+# Duration=None -> Effect is permanent
+# Duration=0    -> Effect lasts for the whole battle
+# Duration>0    -> Effect lasts for set amount of turns
+
+POTIONS = [
+
+    Potion(name="Lesser Health Potion", article="a",
+           effectName="Heal", function=lesserHealthPotion, duration=None, itemRating=2,
+           desc="A bottle filled with shiny pink liquid.", effectDesc="Restores 2 HP"),
+
+    Potion(name="Health Potion", article="a",
+           effectName="Heal", function=healthPotion, duration=None,
+           itemRating=10, desc="A bottle filled with shiny pink liquid.", effectDesc="Restores 5 HP"),
+
+    Potion(name="Greater Health Potion", article="a",
+           effectName="Heal", function=healthPotion, duration=None,
+           itemRating=50, desc="A bottle filled with shiny pink liquid.", effectDesc="Restores 25 HP"),
+
+    Potion(name="Superior Health Potion", article="a",
+           effectName="Heal", function=healthPotion, duration=None,
+           itemRating=200, desc="A bottle filled with shiny pink liquid.", effectDesc="Restores 100 HP"),
+
+    Potion(name="Growth Elixir", article="a", effectName="Growth", function=growthElixir, itemRating=15,
+           desc="A jar of thick, red, muck with small multicolored chunks. It reminds you of chunky salsa.",
+           effectDesc="Makes you grow to the size of a troll. You gain +1.5 reach.", duration=0),
+
+    Potion(name="Elixir of Haste", article="an", effectName="Haste", function=hasteElixir, itemRating=20,
+           desc="A crystal bottle filled with what looks like liquid silver. It is much less viscous than the metallic "
+                "color suggests.",
+           effectDesc="Gives you +1 action and +2 movement for the remainder of the battle.", duration=5),
+
+]
+
+EFFECTS = [
+
 ]
 
 ROOM_DESCRIPTIONS = [
