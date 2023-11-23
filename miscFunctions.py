@@ -47,6 +47,14 @@ class Vector2:
         self.y = y
 
 
+class BiDict(dict):
+    def __init__(self, content):
+        inv_content = {v: k for k, v in content.items()}
+        super().__init__({**content, **inv_content})
+
+    def __invert__(self):
+
+
 def getOrientation(var1, var2):  # Returns 1, 0, or -1
     """
     Checks whether var1 is larger or smaller than var2\n

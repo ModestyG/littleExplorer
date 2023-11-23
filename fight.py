@@ -105,7 +105,7 @@ class Fight:
             pass
         elif state == "battleWon":
             out(self.log, "You Won!")
-            checkEffects(self.plr, True)
+            checkEffects(self, True)
             Button(*self.backButtonArgs).grid()
             self.plr.pos = Vector2(None, None)
         elif state == "gameOver":

@@ -6,18 +6,33 @@ from copy import deepcopy
 import fight
 import resources
 from gameClasses import *
-from miscFunctions import Vector2
+from miscFunctions import Vector2, BiDict
 from tkManager import *
 
 #   Import resources
 ENEMIES = resources.ENEMIES
-WEAPONS = resources.WEAPONS
-ROOM_DESCRIPTIONS = resources.ROOM_DESCRIPTIONS
-RUNES = resources.RUNES
-POTIONS = resources.POTIONS
-SPELLS = resources.SPELLS
+ENEMIES_BI = BiDict(ENEMIES)
 
-ITEMS = WEAPONS + RUNES[1:] + POTIONS
+WEAPONS = resources.WEAPONS
+WEAPONS_BI = BiDict(WEAPONS)
+
+ROOM_DESCRIPTIONS = resources.ROOM_DESCRIPTIONS
+ROOM_DESCRIPTIONS_BI = BiDict(ROOM_DESCRIPTIONS)
+
+RUNES = resources.RUNES
+RUNES_BI = BiDict(RUNES)
+
+POTIONS = resources.POTIONS
+POTIONS_BI = BiDict(POTIONS)
+
+SPELLS = resources.SPELLS
+SPELLS_BI = BiDict(SPELLS)
+
+ITEMS = {**WEAPONS, **RUNES, **POTIONS}
+del ITEMS[15]  # Removes empty rune from list of items you can get in chests.
+ITEMS_BI = BiDict(ITEMS)
+
+print(ITEMS)
 
 #   Setup game UI
 w = createGameWindow()
@@ -27,9 +42,9 @@ mainPage = createNotebookPage(notebook, " Main ")
 characterPage = createNotebookPage(notebook, " Character ")
 inventoryPage = createNotebookPage(notebook, " Inventory ")
 magicPage = createNotebookPage(notebook, " Magic ")
+logbookPage = createNotebookPage(notebook, " Logbook ")
 
-#   Setup magic
-runeSlots = [RUNES[0], RUNES[0], RUNES[0]]
+runeSlots = [RUNES[15], RUNES[15], RUNES[15]]
 
 
 class Player:
@@ -53,9 +68,11 @@ class Player:
 
         self.actions = 0
         self.movement = self.movementSpeed
-        self.runeSlots = [RUNES[0], RUNES[0], RUNES[0]]
+        self.runeSlots = [RUNES[15], RUNES[15], RUNES[15]]
 
         self.levelingSpeed = 2
+
+        self.gatheredEntries = [Option([], "Monsters")]
 
     def changeHealth(self, amount):
         self.hp += amount
@@ -248,6 +265,38 @@ def updateMagicPage():
                                                                                                        columnspan=len(runeSlots))
 
 
+def createLogbookPage():
+    clear(logbookPage)
+    tabFrame = ttk.Frame(logbookPage)
+    tabFrame.grid(column=0, row=0)
+    tabFrame.columnconfigure(0)
+    infoFrame = ttk.Frame(logbookPage)
+    infoFrame.grid(column=1, row=0)
+    infoFrame.columnconfigure(1, minsize=0)
+    updateLogbookTabs(tabFrame, infoFrame)
+    updateLogbookInfo(infoFrame)
+
+
+def updateLogbookTabs(frame, infoFrame):
+    clear(frame)
+    openOption(frame, infoFrame)
+
+
+def updateLogbookInfo(frame, chosen=None):
+    clear(frame)
+    if chosen is None:
+        testLabel = Label(frame, "Logbook Frontpage", anchor=tk.CENTER, width=30)
+        testLabel.columnconfigure(0, weight=1)
+        testLabel.grid()
+    else:
+        Label(frame, chosen.name, width=30, anchor=tk.CENTER).grid()
+        if type(chosen) == Enemy:
+            Label(frame, f"Strength: {chosen.strength}").grid()
+            Label(frame, f"Health: {chosen.health}").grid()
+            Label(frame, f"Reach: {chosen.reach}").grid()
+
+
+# Magic functions
 def activateExperiment():
     runeSlotIds = ""
     for rune in runeSlots:
@@ -274,6 +323,25 @@ def addRune(rune):
 def removeRune(index):
     runeSlots[index] = RUNES[0]
     updateMagicPage()
+
+
+# Logbook functions
+
+def openOption(frame, infoFrame, parentOption=None):
+    if parentOption is None:
+        parentOption = Option(plr.gatheredEntries, opened=True)
+    for option in parentOption.thing:
+        Button(option.name, lambda op=option: openEntry(op, frame, infoFrame), frame).grid()
+        if type(option) == Option and option.opened:
+            openOption(frame, infoFrame, option)
+
+
+def openEntry(option, tabFrame, infoFrame):
+    if type(option) == Option:
+        option.opened = not bool(option.opened)
+        updateLogbookTabs(tabFrame, infoFrame)
+    else:
+        updateLogbookInfo(infoFrame, option)
 
 
 #   Win and Lose placeholder functions
@@ -340,6 +408,7 @@ def main():
     bindMain()
     updateInventoryPage()
     updateCharacterPage()
+    createLogbookPage()
     describeRoom()
     w.wait_window()
 

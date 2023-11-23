@@ -5,24 +5,15 @@ from PIL import ImageTk, Image
 
 
 class Button(ttk.Button):
-    def __init__(self, text, command, parent):
-        kwargs = {
-            "text": text,
-            "command": command
-        }
-        super().__init__(parent, **kwargs)
+    def __init__(self, text, command, parent, **kwargs):
+        super().__init__(parent, text=text, command=command, **kwargs)
 
 
 class Label(ttk.Label):
     wraplength = 450
 
-    def __init__(self, parent, text, justify=tk.CENTER):
-        kwargs = {
-            "text": text,
-            "justify": justify,
-            "wraplength": self.wraplength,
-        }
-        super().__init__(parent, **kwargs)
+    def __init__(self, parent, text, justify=tk.CENTER, **kwargs):
+        super().__init__(parent, text=text, justify=justify, wraplength=self.wraplength, **kwargs)
 
 
 class NotebookPage(ttk.Frame):

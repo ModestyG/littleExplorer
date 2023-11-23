@@ -13,8 +13,9 @@ class Room:
 
 
 class Enemy:
-    def __init__(self, name, strength, article, health, reach=3, movement=3, cr=1):
+    def __init__(self, name, id, strength, article, health, reach=3, movement=3, cr=1):
         self.name = name
+        self.id = id
         self.strength = strength
         self.article = article  # The article that precedes the enemy's name (ex: {A} rat approaches you)
         self.pos = Vector2(None, None)
@@ -41,6 +42,9 @@ class Item:
         self.article = article
         self.ir = itemRating
         self.desc = desc
+
+    def __repr__(self):
+        return "{" + self.name + "}"
 
 
 class Weapon(Item):
@@ -84,3 +88,10 @@ class Spell:
 
     def execute(self, args):
         return self.spellFunction(args)
+
+
+class Option:
+    def __init__(self, thing, name=None, opened=False):
+        self.thing = thing
+        self.opened = opened
+        self.name = name
