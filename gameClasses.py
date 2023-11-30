@@ -36,6 +36,12 @@ class Enemy:
         return "{" + self.name + "}"
 
 
+class Entry:
+    def __init__(self):
+        self.name = "New Entry"
+        self.content = ["Text 1", "Text 2"]
+
+
 class Item:
     def __init__(self, name, article, itemRating, desc):
         self.name = name

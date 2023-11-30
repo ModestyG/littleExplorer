@@ -1,6 +1,8 @@
 # Adventure game about a travelling artificer
 
 import random
+import tkinter.font
+import tkinter.simpledialog
 from copy import deepcopy
 
 import fight
@@ -11,28 +13,19 @@ from tkManager import *
 
 #   Import resources
 ENEMIES = resources.ENEMIES
-ENEMIES_BI = BiDict(ENEMIES)
 
 WEAPONS = resources.WEAPONS
-WEAPONS_BI = BiDict(WEAPONS)
 
 ROOM_DESCRIPTIONS = resources.ROOM_DESCRIPTIONS
-ROOM_DESCRIPTIONS_BI = BiDict(ROOM_DESCRIPTIONS)
 
 RUNES = resources.RUNES
-RUNES_BI = BiDict(RUNES)
 
 POTIONS = resources.POTIONS
-POTIONS_BI = BiDict(POTIONS)
 
 SPELLS = resources.SPELLS
-SPELLS_BI = BiDict(SPELLS)
 
-ITEMS = {**WEAPONS, **RUNES, **POTIONS}
+ITEMS = BiDict({**WEAPONS, **RUNES, **POTIONS})
 del ITEMS[15]  # Removes empty rune from list of items you can get in chests.
-ITEMS_BI = BiDict(ITEMS)
-
-print(ITEMS)
 
 #   Setup game UI
 w = createGameWindow()
@@ -72,7 +65,7 @@ class Player:
 
         self.levelingSpeed = 2
 
-        self.gatheredEntries = [Option([], "Monsters")]
+        self.gatheredEntries = [Option([], "Monsters"), Option([], "Potions")]
 
     def changeHealth(self, amount):
         self.hp += amount
@@ -103,7 +96,7 @@ def describeRoom():
 
 def buildRoom():
     unbindMain()
-    room = Room(desc=ROOM_DESCRIPTIONS[random.randint(0, len(ROOM_DESCRIPTIONS) - 1)])
+    room = Room(desc=ROOM_DESCRIPTIONS[random.randint(1, len(ROOM_DESCRIPTIONS))])
     room.width = random.randint(3, 15)
     room.height = random.randint(5, 15)
     summonEnemy(room)
@@ -125,12 +118,13 @@ def buildRoom():
 
 def summonEnemy(room):
     weights = []
-    for enemy in ENEMIES:
+    for enemy in ENEMIES.invert():
         weight = 100 / ((enemy.cr - plr.lv) ** 2 + 1)
         if enemy.cr > plr.lv:
             weight /= 2
         weights.append(weight)
-    room.enemy = deepcopy(*random.choices(ENEMIES, weights))
+    room.enemy = deepcopy(*random.choices(ENEMIES.getList(), weights))
+    addEntry(ENEMIES[room.enemy.id], "/Monsters/")
 
 
 def encounterTrap():
@@ -145,7 +139,7 @@ def encounterTrap():
 def fillChest(room):
     points = plr.lv
     while points >= 2:
-        item = ITEMS[random.randint(0, len(ITEMS) - 1)]
+        item = ITEMS.getRandomItem()
         if item.ir <= points:
             points -= item.ir
             room.chestContents.append(item)
@@ -267,14 +261,21 @@ def updateMagicPage():
 
 def createLogbookPage():
     clear(logbookPage)
-    tabFrame = ttk.Frame(logbookPage)
-    tabFrame.grid(column=0, row=0)
+    topMenu = tk.Frame(logbookPage, pady=5, padx=5, bg="gray85", highlightthickness=2)
+    topMenu.grid(column=0, row=0, columnspan=2, sticky="nsew")
+    Button("Add Entry", lambda: addEntry(Entry()), topMenu).grid(column=0, row=0)
+    tabFrame = tk.Frame(logbookPage, bg="gray85", highlightbackground="gray70", highlightthickness=2, pady=5, padx=5)
+    tabFrame.grid(column=0, row=1, sticky="n")
     tabFrame.columnconfigure(0)
-    infoFrame = ttk.Frame(logbookPage)
-    infoFrame.grid(column=1, row=0)
+    infoFrame = tk.Frame(logbookPage, bg="gray85", highlightbackground="gray70", highlightthickness=2, pady=5, padx=5, height=275,
+                         width=350)
+    infoFrame.grid_propagate(False)
+    infoFrame.grid(column=1, row=1, sticky="n")
     infoFrame.columnconfigure(1, minsize=0)
+    myscrollbar = tk.Scrollbar(infoFrame, orient="vertical")
+    myscrollbar.grid(sticky="e")
     updateLogbookTabs(tabFrame, infoFrame)
-    updateLogbookInfo(infoFrame)
+    updateLogbookInfo(tabFrame, infoFrame)
 
 
 def updateLogbookTabs(frame, infoFrame):
@@ -282,7 +283,7 @@ def updateLogbookTabs(frame, infoFrame):
     openOption(frame, infoFrame)
 
 
-def updateLogbookInfo(frame, chosen=None):
+def updateLogbookInfo(tabFrame, frame, chosen=None):
     clear(frame)
     if chosen is None:
         testLabel = Label(frame, "Logbook Frontpage", anchor=tk.CENTER, width=30)
@@ -294,13 +295,19 @@ def updateLogbookInfo(frame, chosen=None):
             Label(frame, f"Strength: {chosen.strength}").grid()
             Label(frame, f"Health: {chosen.health}").grid()
             Label(frame, f"Reach: {chosen.reach}").grid()
+        elif type(chosen) == Entry:
+            for part in chosen.content:
+                if type(part) == str:
+                    tk.Label(frame, text=part).grid()
+            Button("Add Text", lambda: [chosen.content.append("New Text"), updateLogbookInfo(tabFrame, frame, chosen)], frame).grid()
+        Button("Change Name", lambda: changeName(chosen, tabFrame, frame), frame).grid()
 
 
 # Magic functions
 def activateExperiment():
     runeSlotIds = ""
     for rune in runeSlots:
-        if rune != RUNES[0]:
+        if rune != RUNES[15]:
             runeSlotIds += str(rune.id) + ";"
     try:
         outcome = SPELLS[runeSlotIds].desc
@@ -321,7 +328,7 @@ def addRune(rune):
 
 
 def removeRune(index):
-    runeSlots[index] = RUNES[0]
+    runeSlots[index] = RUNES[15]
     updateMagicPage()
 
 
@@ -331,9 +338,15 @@ def openOption(frame, infoFrame, parentOption=None):
     if parentOption is None:
         parentOption = Option(plr.gatheredEntries, opened=True)
     for option in parentOption.thing:
-        Button(option.name, lambda op=option: openEntry(op, frame, infoFrame), frame).grid()
-        if type(option) == Option and option.opened:
-            openOption(frame, infoFrame, option)
+        if type(option) == Option:
+            tk.Button(text=option.name, command=lambda op=option: openEntry(op, frame, infoFrame), master=frame, bg="gray80",
+                      font=tkinter.font.Font(family="Arial", size=14, weight="bold"), width=15).grid(sticky="w")
+            if option.opened:
+                openOption(frame, infoFrame, option)
+        else:
+            tk.Button(text=option.name, command=lambda op=option: openEntry(op, frame, infoFrame), master=frame,
+                      bg="gray85", font=tkinter.font.Font(
+                    family="Arial", size=13), width=18).grid(sticky="w")
 
 
 def openEntry(option, tabFrame, infoFrame):
@@ -341,7 +354,25 @@ def openEntry(option, tabFrame, infoFrame):
         option.opened = not bool(option.opened)
         updateLogbookTabs(tabFrame, infoFrame)
     else:
-        updateLogbookInfo(infoFrame, option)
+        updateLogbookInfo(tabFrame, infoFrame, option)
+
+
+def addEntry(entry, target="/"):
+    targetList = target.split("/")
+    parentThing = plr.gatheredEntries
+    for name in targetList:
+        for option in parentThing:
+            if option.name == name:
+                parentThing = option.thing
+                break
+    parentThing.append(entry)
+    createLogbookPage()
+
+
+def changeName(target, tabFrame, infoFrame):
+    target.name = (tkinter.simpledialog.askstring("Change Name", "Please enter the new name"))
+    updateLogbookInfo(tabFrame, infoFrame, target)
+    updateLogbookTabs(tabFrame, infoFrame)
 
 
 #   Win and Lose placeholder functions

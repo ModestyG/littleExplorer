@@ -1,7 +1,8 @@
 from gameClasses import *
+from miscFunctions import BiDict
 from spellFunctions import *
 
-ENEMIES = {
+ENEMIES = BiDict({
     1: Enemy("Spider", 1, strength=1, article="a", health=1, reach=2, cr=2),
     2: Enemy("Rat", 2, strength=1, article="a", health=2, reach=1.5, movement=4, cr=4),
     3: Enemy("Boar", 3, strength=1.5, article="a wild", health=3, reach=2, movement=4, cr=18),
@@ -17,9 +18,9 @@ ENEMIES = {
     13: Enemy("Ice Dragon", 13, strength=80, article="an", health=600, reach=5, cr=500),
     14: Enemy("Fire Dragon", 14, strength=100, article="a", health=500, reach=5, cr=550),
     15: Enemy("God", 15, strength=1000, article="", health=10000, reach=10, cr=1000),
-}
+})
 
-WEAPONS = {
+WEAPONS = BiDict({
     1: Weapon(name="Stick", strBonus=0, article="a", reach=1.5,
               desc="A stick. Maybe if you hit the enemy REALLY hard it will leave a mark", itemRating=3),
     2: Weapon(name="Dagger", strBonus=1, article="a", reach=1.5, desc="A small but sharp dagger.", itemRating=3),
@@ -32,13 +33,13 @@ WEAPONS = {
     8: Weapon(name="Gun", strBonus=100, article="a", reach=8, desc="'You're a fool. No weapon forged can stop me.' 'That was then... this "
                                                                    "is now.' I swear this is just a very high-level enchanted artefact.",
               itemRating=400),
-}
+})
 
 # Duration=None -> Effect is permanent
 # Duration=0    -> Effect lasts for the whole battle
 # Duration>0    -> Effect lasts for set amount of turns
 
-POTIONS = {
+POTIONS = BiDict({
 
     9: Potion(name="Lesser Health Potion", article="a",
               effectName="Heal", function=lesserHealthPotion, duration=None, itemRating=2,
@@ -64,24 +65,24 @@ POTIONS = {
                desc="A crystal bottle filled with what looks like liquid silver. It is much less viscous than the metallic color suggests.",
                effectDesc="Gives you +1 action and +2 movement for the remainder of the battle.", duration=5),
 
-}
-ROOM_DESCRIPTIONS = {
+})
+ROOM_DESCRIPTIONS = BiDict({
     1: "You're in a large and humid cavern. There are large, dripping stalactites hanging from the ceiling and you can "
        "hear a waterfall in the distance. Opposite you are three dark openings.",
     2: "You have entered a long corridor with multiple numbered doors on both sides. The floor is covered in red carpet "
        "and the lights are turned down. You can hear faint lobby music. Only three of the doors seem unlocked."
-}
+})
 
-RUNES = {
+RUNES = BiDict({
     15: Rune("None", runeId=0, itemRating=0),
     16: Rune("Frost Rune", runeId=1, itemRating=10, image="ice.png"),
     17: Rune("Fire Rune", runeId=2, itemRating=10, image="fire.png")
-}
+})
 
-SPELLS = {
+SPELLS = BiDict({
     "": Spell("You haven't chosen any runes. Nothing happens.", uselessSpell),
 
     "1;": Spell("The rune slowly grows colder until you are forced to drop it. As soon as you stop touching it, the rune's glow fades "
                 "out. Your fingertips are covered in frost.", spell_1),
     "2;": Spell("A small ball of fire forms in your hand before launching off towards a wall", spell_2, False)
-}
+})

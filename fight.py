@@ -19,7 +19,7 @@ class Fight:
         self.log = tk.Text(frame, height=1.5 * self.room.height, width=40, state="disabled")
         self.actionButtonFrame = ttk.Frame(frame)
         self.state = "starting"
-        self.runeSlots = [RUNES[0], RUNES[0], RUNES[0]]
+        self.runeSlots = [RUNES[15], RUNES[15], RUNES[15]]
         self.temporaryFrame = None
 
     def setup(self):
@@ -250,7 +250,7 @@ def addRune(fight, rune):
 
 
 def removeRune(fight, index):
-    fight.runeSlots[index] = RUNES[0]
+    fight.runeSlots[index] = RUNES[15]
     magicAction(fight)
 
 
@@ -281,7 +281,7 @@ def castSpell(fight, magicFrame):
     fight.updateActionButtons("playerTurn")
     runeSlotIds = ""
     for rune in fight.runeSlots:
-        if rune != RUNES[0]:
+        if rune != RUNES[15]:
             runeSlotIds += str(rune.id) + ";"
     try:
         spell = SPELLS[runeSlotIds]
