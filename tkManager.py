@@ -4,6 +4,22 @@ from tkinter import ttk
 from PIL import ImageTk, Image
 
 
+class Canvas(tk.Canvas):
+    def __init__(self, parent, **kwargs):
+        super().__init__(parent, **kwargs)
+        self.bind('<Enter>', self._bound_to_mousewheel)
+        self.bind('<Leave>', self._unbound_to_mousewheel)
+
+    def _bound_to_mousewheel(self, event):
+        self.bind_all("<MouseWheel>", self._on_mousewheel)
+
+    def _unbound_to_mousewheel(self, event):
+        self.unbind_all("<MouseWheel>")
+
+    def _on_mousewheel(self, event):
+        self.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+
 class Button(ttk.Button):
     def __init__(self, text, command, parent, **kwargs):
         super().__init__(parent, text=text, command=command, **kwargs)

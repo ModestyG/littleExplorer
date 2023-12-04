@@ -84,6 +84,7 @@ class Player:
 # Room functions
 
 def describeRoom():
+    w.bind("<Control-f>", "break")
     bindMain()
     updateMagicPage()
     clear(mainPage)
@@ -267,15 +268,24 @@ def createLogbookPage():
     tabFrame = tk.Frame(logbookPage, bg="gray85", highlightbackground="gray70", highlightthickness=2, pady=5, padx=5)
     tabFrame.grid(column=0, row=1, sticky="n")
     tabFrame.columnconfigure(0)
-    infoFrame = tk.Frame(logbookPage, bg="gray85", highlightbackground="gray70", highlightthickness=2, pady=5, padx=5, height=275,
-                         width=350)
-    infoFrame.grid_propagate(False)
-    infoFrame.grid(column=1, row=1, sticky="n")
-    infoFrame.columnconfigure(1, minsize=0)
-    myscrollbar = tk.Scrollbar(infoFrame, orient="vertical")
-    myscrollbar.grid(sticky="e")
+
+    infoCanvas = Canvas(logbookPage, borderwidth=0, background="gray85")
+    infoFrame = tk.Frame(infoCanvas, background="gray85")
+    scrollbar = tk.Scrollbar(logbookPage, orient="vertical", command=infoCanvas.yview)
+    infoCanvas.configure(yscrollcommand=scrollbar.set)
+
+    scrollbar.grid(sticky="esn", column=2, row=1)
+    infoCanvas.grid(sticky="nsw", column=1, row=1)
+    infoCanvas.create_window((4, 4), window=infoFrame, anchor="nw")
+
+    infoFrame.bind("<Configure>", lambda event, canvas=infoCanvas: onFrameConfigure(canvas))
+
     updateLogbookTabs(tabFrame, infoFrame)
     updateLogbookInfo(tabFrame, infoFrame)
+
+
+def onFrameConfigure(canvas):  # Update canvas to match frame
+    canvas.configure(scrollregion=canvas.bbox("all"))
 
 
 def updateLogbookTabs(frame, infoFrame):
@@ -298,7 +308,12 @@ def updateLogbookInfo(tabFrame, frame, chosen=None):
         elif type(chosen) == Entry:
             for part in chosen.content:
                 if type(part) == str:
-                    tk.Label(frame, text=part).grid()
+                    textBox = tk.Text(frame, background="gray85")
+                    textBox.insert(tk.END, part)
+                    textBox.grid()
+                    textBox.bind("<FocusIn>", lambda event: [unbindMain(), print("In"), w.bind("")])
+                    textBox.bind("<FocusOut>", lambda event: [bindMain(), print("out")])
+
             Button("Add Text", lambda: [chosen.content.append("New Text"), updateLogbookInfo(tabFrame, frame, chosen)], frame).grid()
         Button("Change Name", lambda: changeName(chosen, tabFrame, frame), frame).grid()
 
