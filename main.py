@@ -306,13 +306,21 @@ def updateLogbookInfo(tabFrame, frame, chosen=None):
             Label(frame, f"Health: {chosen.health}").grid()
             Label(frame, f"Reach: {chosen.reach}").grid()
         elif type(chosen) == Entry:
-            for part in chosen.content:
+            for index in range(len(chosen.content)):
+                part = chosen.content[index]
+                partFrame = tk.Frame(frame, background="gray85")
+                partFrame.grid()
                 if type(part) == str:
-                    textBox = tk.Text(frame, background="gray85")
+                    textBox = tk.Text(partFrame, background="gray85", width=40)
                     textBox.insert(tk.END, part)
-                    textBox.grid()
-                    textBox.bind("<FocusIn>", lambda event: [unbindMain(), print("In"), w.bind("")])
-                    textBox.bind("<FocusOut>", lambda event: [bindMain(), print("out")])
+                    textBox.configure(state="disabled")
+                    textBox.grid(column=0, row=0)
+                    textBox.bind("<FocusIn>", lambda event: unbindTabs())
+                    textBox.bind("<FocusOut>", lambda event: bindTabs())
+
+                    editButton = ImageButton(partFrame, None, "editIcon.png")
+                    editButton.configure(command=lambda box=textBox, frm=partFrame, btn=editButton, i=index: editText(box, frm, btn, i))
+                    editButton.grid(row=0, column=1, sticky="n")
 
             Button("Add Text", lambda: [chosen.content.append("New Text"), updateLogbookInfo(tabFrame, frame, chosen)], frame).grid()
         Button("Change Name", lambda: changeName(chosen, tabFrame, frame), frame).grid()
@@ -390,6 +398,19 @@ def changeName(target, tabFrame, infoFrame):
     updateLogbookTabs(tabFrame, infoFrame)
 
 
+def editText(textBox, frame, button, index):
+    textBox.configure(state="normal")
+    button.setImage("saveIcon.png")
+    button.configure(command=lambda: saveText(textBox, frame, button, index))
+
+
+def saveText(textBox, frame, button, index):
+    textBox.configure(state="disabled")
+    bindTabs()
+    button.configure(command=lambda: editText(textBox, frame, button, index))
+    button.setImage("editIcon.png")
+
+
 #   Win and Lose placeholder functions
 
 def gameOver():
@@ -407,16 +428,28 @@ def win():
 
 
 #   Keybinds
+def bindTabs():
+    w.bind("q", lambda event: notebook.select(mainPage))
+    w.bind("w", lambda event: notebook.select(characterPage))
+    w.bind("c", lambda event: notebook.select(characterPage))
+    w.bind("e", lambda event: notebook.select(inventoryPage))
+    w.bind("i", lambda event: notebook.select(inventoryPage))
+    w.bind("r", lambda event: notebook.select(magicPage))
+    w.bind("m", lambda event: notebook.select(magicPage))
+    w.bind("t", lambda event: notebook.select(logbookPage))
+    w.bind("l", lambda event: notebook.select(logbookPage))
 
-def keyPressed(e):
-    if e.char == "q":
-        notebook.select(mainPage)
-    elif e.char == "w" or e.char == "c":
-        notebook.select(characterPage)
-    elif e.char == "e" or e.char == "i":
-        notebook.select(inventoryPage)
-    elif e.char == "r" or e.char == "m":
-        notebook.select(magicPage)
+
+def unbindTabs():
+    w.bind("q", "break")
+    w.bind("w", "break")
+    w.bind("c", "break")
+    w.bind("e", "break")
+    w.bind("i", "break")
+    w.bind("r", "break")
+    w.bind("m", "break")
+    w.bind("t", "break")
+    w.bind("l", "break")
 
 
 def bindMain():
@@ -450,7 +483,7 @@ def debug():
 
 
 def main():
-    w.bind("<Key>", keyPressed)
+    bindTabs()
     bindMain()
     updateInventoryPage()
     updateCharacterPage()

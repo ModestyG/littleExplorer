@@ -41,16 +41,24 @@ class NotebookPage(ttk.Frame):
         super().__init__(parent, **kwargs)
 
 
-class RuneSlotImage(ttk.Button):
-    def __init__(self, parent, command, image="placeholder.png", dimensions=(150, 200)):
+class ImageButton(ttk.Button):
+    def __init__(self, parent, command, image="placeholder.png", dimensions=(20, 20), **kwargs):
+        self.dimensions = dimensions
         img = Image.open(image)
         photo = ImageTk.PhotoImage(img.resize(dimensions))
         self.image = photo
-        kwargs = {
-            "command": command,
-            "image": photo
-        }
-        super().__init__(parent, **kwargs)
+        super().__init__(parent, command=command, image=photo, **kwargs)
+
+    def setImage(self, image):
+        img = Image.open(image)
+        photo = ImageTk.PhotoImage(img.resize(self.dimensions))
+        self.configure(image=photo)
+        self.image = photo
+
+
+class RuneSlotImage(ImageButton):
+    def __init__(self, parent, command, image="placeholder.png", dimensions=(150, 200), **kwargs):
+        super().__init__(parent, command, image, dimensions, **kwargs)
 
 
 def createGameWindow():
