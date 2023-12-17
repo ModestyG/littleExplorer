@@ -54,6 +54,6 @@ def hasteElixir(plr, activate=True):
 
 def growthElixir(plr, activate=True):
     if activate:
-        plr.reach += 1.5
+        plr.reachBoost += 1.5
     else:
-        plr.reach -= 1.5
+        plr.reachBoost -= 1.5

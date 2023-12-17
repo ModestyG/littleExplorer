@@ -19,7 +19,7 @@ class Fight:
         self.log = tk.Text(frame, height=1.5 * self.room.height, width=40, state="disabled")
         self.actionButtonFrame = ttk.Frame(frame)
         self.state = "starting"
-        self.runeSlots = [RUNES[15], RUNES[15], RUNES[15]]
+        self.runeSlots = [RUNES[30], RUNES[30], RUNES[30]]
         self.temporaryFrame = None
 
     def setup(self):
@@ -379,8 +379,8 @@ def cancelMove(fight, cellsInReach):
 def cancelAttack(fight):
     plr = fight.plr
     fight.updateActionButtons("playerTurn")
-    emptyAttackSquares = getCellsInReach(fight, fight.plr.weapon.reach, plr.pos, "walkable")
-    attackSquaresWithEnemy = getCellsInReach(fight, fight.plr.weapon.reach, fight.plr.pos, "enemy")
+    emptyAttackSquares = getCellsInReach(fight, plr.weapon.reach + plr.reachBoost, plr.pos, "walkable")
+    attackSquaresWithEnemy = getCellsInReach(fight, plr.weapon.reach + plr.reachBoost, fight.plr.pos, "enemy")
     for cell in emptyAttackSquares:
         cell.setColor("white")
         cell.setCommand(None)
@@ -419,8 +419,8 @@ def moveEnemy(fight, pos):
 def showAttackSquares(fight):
     fight.updateActionButtons("playerAiming")
     plr = fight.plr
-    cells = getCellsInReach(fight, plr.weapon.reach, plr.pos, "walkable")
-    enemyCells = getCellsInReach(fight, plr.weapon.reach, plr.pos, "enemy")
+    cells = getCellsInReach(fight, plr.weapon.reach + plr.reachBoost, plr.pos, "walkable")
+    enemyCells = getCellsInReach(fight, plr.weapon.reach + plr.reachBoost, plr.pos, "enemy")
     for cell in enemyCells:
         cell.setColor("SeaGreen3")
         cell.setCommand(lambda: [attackEnemy(fight)])

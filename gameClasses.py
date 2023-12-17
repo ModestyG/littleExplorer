@@ -39,32 +39,39 @@ class Enemy:
 class Entry:
     def __init__(self):
         self.name = "New Entry"
-        self.content = ["Text 1", "Text 2"]
+        self.path = "/"
+        self.content = [TextBox, TextBox]
+
+
+class TextBox:
+    def __init__(self):
+        self.content = "New Text"
 
 
 class Item:
-    def __init__(self, name, article, itemRating, desc):
+    def __init__(self, name, article, itemRating, desc, id):
         self.name = name
         self.article = article
         self.ir = itemRating
         self.desc = desc
+        self.id = id
 
     def __repr__(self):
         return "{" + self.name + "}"
 
 
 class Weapon(Item):
-    def __init__(self, name, strBonus, article, itemRating=0, reach=1, desc=""):
+    def __init__(self, name, id, strBonus, article, itemRating=0, reach=1, desc=""):
         self.strBonus = strBonus
         self.reach = reach
-        super().__init__(name, article, itemRating, desc)
+        super().__init__(name, article, itemRating, desc, id)
 
 
 class Rune(Item):
     def __init__(self, name, runeId, itemRating=0, image="placeholder.png"):
         self.id = runeId
         self.image = image
-        super().__init__(name, "a", itemRating, "A stone tablet with a glowing engraving.")
+        super().__init__(name, "a", itemRating, "A stone tablet with a glowing engraving.", id)
 
 
 class Effect:
@@ -75,10 +82,10 @@ class Effect:
 
 
 class Potion(Item):
-    def __init__(self, name, article, effectName, function, itemRating, desc, effectDesc, duration=None, strength=1):
+    def __init__(self, name, id, article, effectName, function, itemRating, desc, effectDesc, duration=None, strength=1):
         self.effect = Effect(effectName, function, duration)
         self.effectDesc = effectDesc
-        super().__init__(name, article, itemRating, desc)
+        super().__init__(name, article, itemRating, desc, id)
 
     def drink(self, plr):
         if self.effect.duration is not None:
@@ -88,6 +95,7 @@ class Potion(Item):
 
 class Spell:
     def __init__(self, desc, spellFunction, useNormalDescInFight=True):
+        self.name = "New Spell"
         self.desc = desc
         self.spellFunction = spellFunction
         self.useDesc = useNormalDescInFight
@@ -101,3 +109,4 @@ class Option:
         self.thing = thing
         self.opened = opened
         self.name = name
+        self.path = "/"

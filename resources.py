@@ -21,18 +21,18 @@ ENEMIES = BiDict({
 })
 
 WEAPONS = BiDict({
-    1: Weapon(name="Stick", strBonus=0, article="a", reach=1.5,
-              desc="A stick. Maybe if you hit the enemy REALLY hard it will leave a mark", itemRating=3),
-    2: Weapon(name="Dagger", strBonus=1, article="a", reach=1.5, desc="A small but sharp dagger.", itemRating=3),
-    3: Weapon(name="Wooden Club", strBonus=1, article="a", reach=2, desc="A glorified stick.", itemRating=5),
-    4: Weapon(name="Shortsword", strBonus=2.5, article="a", reach=2,
-              desc="Truly the inferior type of sword. Good for people with noodle arms.", itemRating=20),
-    5: Weapon(name="Silver warhammer", strBonus=3, article="a", reach=2, desc="A silver warhammer with copper decour.", itemRating=30),
-    6: Weapon(name="Longsword", strBonus=3.5, article="a", reach=3, desc="A large sword to swing at your enemies.", itemRating=45),
-    7: Weapon(name="Bow", strBonus=3, article="a", reach=8, desc="A basic bow.", itemRating=75),
-    8: Weapon(name="Gun", strBonus=100, article="a", reach=8, desc="'You're a fool. No weapon forged can stop me.' 'That was then... this "
+    16: Weapon("Stick", 16, strBonus=1, article="a", reach=1.5,
+               desc="A stick. Maybe if you hit the enemy REALLY hard it will leave a mark", itemRating=3),
+    17: Weapon("Dagger", 17, strBonus=2, article="a", reach=1.5, desc="A small but sharp dagger.", itemRating=3),
+    18: Weapon("Wooden Club", 18, strBonus=3, article="a", reach=2, desc="A glorified stick.", itemRating=5),
+    19: Weapon("Shortsword", 19, strBonus=3.5, article="a", reach=2,
+               desc="Truly the inferior type of sword. Good for people with noodle arms.", itemRating=20),
+    20: Weapon("Silver warhammer", 20, strBonus=4, article="a", reach=2, desc="A silver warhammer with copper decour.", itemRating=30),
+    21: Weapon("Longsword", 21, strBonus=4.5, article="a", reach=3, desc="A large sword to swing at your enemies.", itemRating=45),
+    22: Weapon("Bow", 22, strBonus=4, article="a", reach=8, desc="A basic bow.", itemRating=75),
+    23: Weapon("Gun", 23, strBonus=100, article="a", reach=8, desc="'You're a fool. No weapon forged can stop me.' 'That was then... this "
                                                                    "is now.' I swear this is just a very high-level enchanted artefact.",
-              itemRating=400),
+               itemRating=400),
 })
 
 # Duration=None -> Effect is permanent
@@ -41,27 +41,27 @@ WEAPONS = BiDict({
 
 POTIONS = BiDict({
 
-    9: Potion(name="Lesser Health Potion", article="a",
-              effectName="Heal", function=lesserHealthPotion, duration=None, itemRating=2,
-              desc="A bottle filled with shiny pink liquid.", effectDesc="Restores 2 HP"),
+    24: Potion("Lesser Health Potion", 24, article="a",
+               effectName="Heal", function=lesserHealthPotion, duration=None, itemRating=2,
+               desc="A bottle filled with shiny pink liquid.", effectDesc="Restores 2 HP"),
 
-    10: Potion(name="Health Potion", article="a",
+    25: Potion("Health Potion", 25, article="a",
                effectName="Heal", function=healthPotion, duration=None,
                itemRating=10, desc="A bottle filled with shiny pink liquid.", effectDesc="Restores 5 HP"),
 
-    11: Potion(name="Greater Health Potion", article="a",
+    26: Potion("Greater Health Potion", 26, article="a",
                effectName="Heal", function=healthPotion, duration=None,
                itemRating=50, desc="A bottle filled with shiny pink liquid.", effectDesc="Restores 25 HP"),
 
-    12: Potion(name="Superior Health Potion", article="a",
+    27: Potion("Superior Health Potion", 27, article="a",
                effectName="Heal", function=healthPotion, duration=None,
                itemRating=200, desc="A bottle filled with shiny pink liquid.", effectDesc="Restores 100 HP"),
 
-    13: Potion(name="Growth Elixir", article="a", effectName="Growth", function=growthElixir, itemRating=15,
+    28: Potion("Growth Elixir", 28, article="a", effectName="Growth", function=growthElixir, itemRating=15,
                desc="A jar of thick, red, muck with small multicolored chunks. It reminds you of chunky salsa.",
                effectDesc="Makes you grow to the size of a troll. You gain +1.5 reach.", duration=0),
 
-    14: Potion(name="Elixir of Haste", article="an", effectName="Haste", function=hasteElixir, itemRating=20,
+    29: Potion("Elixir of Haste", 29, article="an", effectName="Haste", function=hasteElixir, itemRating=20,
                desc="A crystal bottle filled with what looks like liquid silver. It is much less viscous than the metallic color suggests.",
                effectDesc="Gives you +1 action and +2 movement for the remainder of the battle.", duration=5),
 
@@ -74,9 +74,9 @@ ROOM_DESCRIPTIONS = BiDict({
 })
 
 RUNES = BiDict({
-    15: Rune("None", runeId=0, itemRating=0),
-    16: Rune("Frost Rune", runeId=1, itemRating=10, image="ice.png"),
-    17: Rune("Fire Rune", runeId=2, itemRating=10, image="fire.png")
+    30: Rune("None", 30, itemRating=0),
+    31: Rune("Frost Rune", 31, itemRating=10, image="ice.png"),
+    32: Rune("Fire Rune", 32, itemRating=10, image="fire.png")
 })
 
 SPELLS = BiDict({
