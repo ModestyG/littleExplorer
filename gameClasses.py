@@ -23,6 +23,7 @@ class Enemy:
         self.health = health
         self.cr = cr
         self.reach = reach
+        self.content = []  # For logbook
 
     def loseHealth(self, fight, amount=1, printWin=True):
         plr = fight.plr
@@ -55,6 +56,7 @@ class Item:
         self.ir = itemRating
         self.desc = desc
         self.id = id
+        self.content = []  # For logbook
 
     def __repr__(self):
         return "{" + self.name + "}"
@@ -68,8 +70,8 @@ class Weapon(Item):
 
 
 class Rune(Item):
-    def __init__(self, name, runeId, itemRating=0, image="placeholder.png"):
-        self.id = runeId
+    def __init__(self, name, id, itemRating=0, image="placeholder.png"):
+        self.id = id
         self.image = image
         super().__init__(name, "a", itemRating, "A stone tablet with a glowing engraving.", id)
 
@@ -94,14 +96,25 @@ class Potion(Item):
 
 
 class Spell:
-    def __init__(self, desc, spellFunction, useNormalDescInFight=True):
-        self.name = "New Spell"
+    def __init__(self, id, desc, spellFunction, useNormalDescInFight=True):
+        self.name = "Unnamed Spell"
         self.desc = desc
         self.spellFunction = spellFunction
         self.useDesc = useNormalDescInFight
+        self.history = []
+        self.hasExperimented = False
+        self.id = id
+        self.content = []  # For logbook
 
     def execute(self, args):
         return self.spellFunction(args)
+
+
+class spellHistoryInstance:
+    def __init__(self, target, resultDesc, distance):
+        self.target = target
+        self.desc = resultDesc
+        self.distance = distance
 
 
 class Option:
@@ -110,3 +123,4 @@ class Option:
         self.opened = opened
         self.name = name
         self.path = "/"
+        self.content = []  # Specifically content for front page. Not the same as "thing" which is where child tabs are placed

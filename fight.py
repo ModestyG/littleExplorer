@@ -2,13 +2,15 @@ import math
 
 import numpy as np
 
+from gameClasses import spellHistoryInstance
+from logManager import entryExists, addEntry
 from miscFunctions import error, getDistance, Vector2
 from resources import RUNES, SPELLS
 from tkManager import *
 
 
 class Fight:
-    def __init__(self, w, frame, backCommand, plr):
+    def __init__(self, w, frame, backCommand, plr, logbookPage):
         self.w = w
         self.frame = frame
         self.backButtonArgs = backCommand
@@ -17,6 +19,7 @@ class Fight:
         self.room = plr.currentRoom
         self.enemy = self.room.enemy
         self.log = tk.Text(frame, height=1.5 * self.room.height, width=40, state="disabled")
+        self.logbookPage = logbookPage
         self.actionButtonFrame = ttk.Frame(frame)
         self.state = "starting"
         self.runeSlots = [RUNES[30], RUNES[30], RUNES[30]]
@@ -153,8 +156,8 @@ class GridButton(tk.Button):
         self.grid(column=self.pos.x, row=self.pos.y)
 
 
-def main(w, frame, backButton, plr):
-    fight = Fight(w, frame, backButton, plr)
+def main(w, frame, backButton, plr, logbookPage):
+    fight = Fight(w, frame, backButton, plr, logbookPage)
     fight.setup()
     movePlayer(fight, Vector2(fight.room.width - 1, fight.room.height - 1))
     moveEnemy(fight, Vector2(0, 0))
@@ -243,14 +246,14 @@ def getDesiredPos(fight):
 
 def addRune(fight, rune):
     for i in range(len(fight.runeSlots)):
-        if not fight.runeSlots[i].id:
+        if fight.runeSlots[i].id == 30:
             fight.runeSlots[i] = rune
             break
     magicAction(fight)
 
 
 def removeRune(fight, index):
-    fight.runeSlots[index] = RUNES[15]
+    fight.runeSlots[index] = RUNES[30]
     magicAction(fight)
 
 
@@ -281,11 +284,13 @@ def castSpell(fight, magicFrame):
     fight.updateActionButtons("playerTurn")
     runeSlotIds = ""
     for rune in fight.runeSlots:
-        if rune != RUNES[15]:
+        if rune != RUNES[30]:
             runeSlotIds += str(rune.id) + ";"
     try:
         spell = SPELLS[runeSlotIds]
         outcome = spell.desc
+        if not entryExists(spell, fight.plr):
+            addEntry(spell, fight.plr, fight.logbookPage, "Spells")
     except KeyError:
         spell = SPELLS[""]
         outcome = "The runes glow for a second before the power fizzles out with a slight hissing sound."
@@ -296,6 +301,8 @@ def castSpell(fight, magicFrame):
     if spell.useDesc:
         out(fight.log, outcome)
     executionOutput = spell.execute(args)
+    spell.history.append(spellHistoryInstance(fight.enemy, executionOutput
+                                              , getDistance(fight.plr.pos, fight.enemy.pos)))
     if executionOutput:
         out(fight.log, executionOutput)
     if fight.enemy.health == 0:
@@ -316,7 +323,6 @@ def movePlayer(fight, pos):
         # fight.getCell(plr.pos).remove(plr)
     plr.pos = pos
     fight.getCell(pos).setColor("blue")
-    fight.getCell(pos).setCommand(lambda: moveAction(fight))
     fight.getCell(pos).states["walkable"] = False
     fight.getCell(pos).states["player"] = True
     fight.getCell(pos).append(plr)
@@ -373,7 +379,6 @@ def cancelMove(fight, cellsInReach):
     for cell in cellsInReach:
         cell.setColor("white")
         cell.setCommand(None)
-    fight.getCell(plr.pos).setCommand(lambda: moveAction(fight))
 
 
 def cancelAttack(fight):
@@ -387,7 +392,6 @@ def cancelAttack(fight):
     for cell in attackSquaresWithEnemy:
         cell.setColor("green")
         cell.setCommand(None)
-    fight.getCell(plr.pos).setCommand(lambda: moveAction(fight))
 
 
 def moveTowardsPlayer(fight, targetPos):

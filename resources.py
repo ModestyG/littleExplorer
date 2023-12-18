@@ -80,9 +80,10 @@ RUNES = BiDict({
 })
 
 SPELLS = BiDict({
-    "": Spell("You haven't chosen any runes. Nothing happens.", uselessSpell),
+    "": Spell(33, "You haven't chosen any runes. Nothing happens.", uselessSpell),
 
-    "1;": Spell("The rune slowly grows colder until you are forced to drop it. As soon as you stop touching it, the rune's glow fades "
-                "out. Your fingertips are covered in frost.", spell_1),
-    "2;": Spell("A small ball of fire forms in your hand before launching off towards a wall", spell_2, False)
+    "31;": Spell(34, "The rune slowly grows colder until you are forced to drop it. As soon as you stop touching it, the rune's glow fades "
+                     "out. Your fingertips are covered in frost. This might have hurt if you used it outside of experiments.", spell_1,
+                 False),
+    "32;": Spell(35, "A small ball of fire forms in your hand before launching off towards a wall", spell_2, False)
 })

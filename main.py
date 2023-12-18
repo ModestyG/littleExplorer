@@ -1,13 +1,12 @@
 # Adventure game about a travelling artificer
 
 import random
-import tkinter.font
-import tkinter.simpledialog
 from copy import deepcopy
 
 import fight
 import resources
 from gameClasses import *
+from logManager import entryExists, addEntry, createLogbookPage
 from miscFunctions import Vector2, BiDict
 from tkManager import *
 
@@ -67,8 +66,11 @@ class Player:
 
         self.gatheredEntries = [Option([], "Monsters"), Option([Option([], "Weapons"), Option([], "Potions"), Option([], "Runes")],
                                                                "Items"), Option([], "Spells")]
-
         self.reachBoost = 0
+
+        self.bindFuncs = [bindTabs, unbindTabs]
+        #  Borde denna ligga här? Absolut inte men det är alldeles för sent på natten för att jag
+        #  ska orka bry mig så konstiga funktioner som inte har någonting med spelaren att göra får hamna i spelar objektet. Fight me.
 
     def changeHealth(self, amount):
         self.hp += amount
@@ -115,7 +117,7 @@ def buildRoom():
         clear(magicPage)
         Label(magicPage, "Cannot experiment while in battle.").grid()
         backButton = ("Continue", describeRoom)
-        fight.main(w, mainPage, backButton, plr)
+        fight.main(w, mainPage, backButton, plr, logbookPage)
 
 
 # Fight functions
@@ -128,8 +130,8 @@ def summonEnemy(room):
             weight /= 2
         weights.append(weight)
     room.enemy = deepcopy(*random.choices(ENEMIES.getList(), weights))
-    if not entryExists(ENEMIES[room.enemy.id]):
-        addEntry(ENEMIES[room.enemy.id], "Monsters")
+    if not entryExists(ENEMIES[room.enemy.id], plr):
+        addEntry(ENEMIES[room.enemy.id], plr, logbookPage, "Monsters")
 
 
 def encounterTrap():
@@ -170,8 +172,13 @@ def takeAll():
 
 
 def takeItem(item):
-    if not entryExists(item):
-        addEntry(item, "Items")
+    if not entryExists(item, plr):
+        if type(item) == Potion:
+            addEntry(item, plr, logbookPage, "Items/Potions")
+        elif type(item) == Weapon:
+            addEntry(item, plr, logbookPage, "Items/Weapons")
+        elif type(item) == Rune:
+            addEntry(item, plr, logbookPage, "Items/Runes")
     if plr.invSize > len(plr.inv):
         if type(item) == Rune:
             plr.runeInv.append(item)
@@ -265,83 +272,6 @@ def updateMagicPage():
                                                                                                        columnspan=len(runeSlots))
 
 
-def createLogbookPage():
-    clear(logbookPage)
-    topMenu = tk.Frame(logbookPage, pady=5, padx=5, bg="gray85", highlightthickness=2)
-    topMenu.grid(column=0, row=0, columnspan=4, sticky="nsew")
-    Button("Add Entry", lambda: addEntry(Entry()), topMenu).grid(column=0, row=0)
-    Button("Add Folder", lambda: addEntry(Option([], "New Folder")), topMenu).grid(column=1, row=0)
-
-    tabCanvas = Canvas(logbookPage, borderwidth=0, background="gray85", width=200)
-    tabFrame = tk.Frame(tabCanvas, bg="gray85", highlightbackground="gray70", highlightthickness=2, pady=5, padx=5)
-    tabScrollbar = tk.Scrollbar(logbookPage, orient="vertical", command=tabCanvas.yview)
-    tabCanvas.configure(yscrollcommand=tabScrollbar.set)
-    tabFrame.columnconfigure(0)
-
-    infoCanvas = Canvas(logbookPage, borderwidth=0, background="gray85")
-    infoFrame = tk.Frame(infoCanvas, background="gray85")
-    infoScrollbar = tk.Scrollbar(logbookPage, orient="vertical", command=infoCanvas.yview)
-    infoCanvas.configure(yscrollcommand=infoScrollbar.set)
-
-    tabScrollbar.grid(sticky="esn", column=1, row=1)
-    tabCanvas.grid(sticky="nsw", column=0, row=1)
-    tabCanvas.create_window((4, 4), window=tabFrame, anchor="ne")
-    infoScrollbar.grid(sticky="esn", column=3, row=1)
-    infoCanvas.grid(sticky="nsw", column=2, row=1)
-    infoCanvas.create_window((4, 4), window=infoFrame, anchor="nw")
-
-    tabFrame.bind("<Configure>", lambda event, canvas=tabCanvas: onFrameConfigure(canvas))
-    infoFrame.bind("<Configure>", lambda event, canvas=infoCanvas: onFrameConfigure(canvas))
-
-    updateLogbookTabs(tabFrame, infoFrame)
-    updateLogbookInfo(tabFrame, infoFrame)
-
-
-def onFrameConfigure(canvas):  # Update canvas to match frame
-    canvas.configure(scrollregion=canvas.bbox("all"))
-
-
-def updateLogbookTabs(frame, infoFrame):
-    clear(frame)
-    openOption(frame, infoFrame)
-
-
-def updateLogbookInfo(tabFrame, frame, chosen=None):
-    clear(frame)
-    if chosen is None:
-        testLabel = Label(frame, "Logbook Frontpage", anchor=tk.CENTER, width=30)
-        testLabel.columnconfigure(0, weight=1)
-        testLabel.grid()
-    else:
-        Label(frame, chosen.name, width=30, anchor=tk.CENTER).grid()
-        if type(chosen) == Enemy:
-            Label(frame, f"Strength: {chosen.strength}").grid()
-            Label(frame, f"Health: {chosen.health}").grid()
-            Label(frame, f"Reach: {chosen.reach}").grid()
-        elif type(chosen) == Entry:
-            for part in chosen.content:
-                partFrame = tk.Frame(frame, background="gray85")
-                partFrame.grid()
-                if type(part) == TextBox:
-                    textBox = tk.Text(partFrame, background="gray85", width=40)
-                    textBox.insert(tk.END, part.content)
-                    textBox.configure(state="disabled")
-                    textBox.grid(column=0, row=0)
-                    textBox.bind("<FocusIn>", lambda event: unbindTabs())
-                    textBox.bind("<FocusOut>", lambda event: bindTabs())
-
-                    editButton = ImageButton(partFrame, None, "editIcon.png")
-                    editButton.configure(command=lambda box=textBox, frm=partFrame, btn=editButton, txtObj=part: editText(box, frm, btn,
-                                                                                                                          part))
-                    editButton.grid(row=0, column=1, sticky="n")
-
-            Button("Add Text", lambda: [chosen.content.append(TextBox()), updateLogbookInfo(tabFrame, frame, chosen)],
-                   frame).grid()
-        Button("Change Name", lambda: changeName(chosen, tabFrame, frame), frame).grid()
-        Button("Change Path", lambda: changePath(chosen), frame).grid()
-        Button("Remove Entry", lambda: removeEntry(chosen, chosen.path), frame).grid()
-
-
 # Magic functions
 def activateExperiment():
     runeSlotIds = ""
@@ -349,18 +279,25 @@ def activateExperiment():
         if rune != RUNES[30]:
             runeSlotIds += str(rune.id) + ";"
     try:
-        outcome = SPELLS[runeSlotIds].desc
+        spell = SPELLS[runeSlotIds]
+        title = spell.name
+        outcome = spell.desc
+        spell.hasExperimented = True
+        if not entryExists(spell, plr):
+            addEntry(spell, plr, logbookPage, "Spells")
     except KeyError:
         outcome = "The runes glow for a second before the power fizzles out with a slight hissing sound."
+        title = "Fail"
 
     clear(magicPage)
+    Label(magicPage, title).grid()
     Label(magicPage, outcome).grid()
     Button("Continue", updateMagicPage, magicPage).grid()
 
 
 def addRune(rune):
     for i in range(len(runeSlots)):
-        if not runeSlots[i].id:
+        if runeSlots[i].id == 30:
             runeSlots[i] = rune
             break
     updateMagicPage()
@@ -369,95 +306,6 @@ def addRune(rune):
 def removeRune(index):
     runeSlots[index] = RUNES[30]
     updateMagicPage()
-
-
-# Logbook functions
-
-def openOption(frame, infoFrame, parentOption=None):
-    if parentOption is None:
-        parentOption = Option(plr.gatheredEntries, opened=True)
-    for option in parentOption.thing:
-        if type(option) == Option:
-            tk.Button(text=option.name, command=lambda op=option: openEntry(op, frame, infoFrame), master=frame, bg="gray80",
-                      font=tkinter.font.Font(family="Arial", size=14, weight="bold"), width=15).grid(sticky="w")
-            if option.opened:
-                openOption(frame, infoFrame, option)
-        else:
-            tk.Button(text=option.name, command=lambda op=option: openEntry(op, frame, infoFrame), master=frame,
-                      bg="gray85", font=tkinter.font.Font(
-                    family="Arial", size=13), width=18).grid(sticky="w")
-
-
-def openEntry(option, tabFrame, infoFrame):
-    if type(option) == Option:
-        option.opened = not bool(option.opened)
-        updateLogbookTabs(tabFrame, infoFrame)
-    updateLogbookInfo(tabFrame, infoFrame, option)
-
-
-def entryExists(entry, parent=None):
-    if parent is None:
-        parent = plr.gatheredEntries
-    for i in parent:
-        if type(i) == Option:
-            return entryExists(entry, i.thing)
-        elif entry.id == i.id and type(entry) == type(i):
-            return True
-    return False
-
-
-def addEntry(entry, target="/"):
-    entry.path = target
-    targetList = target.split("/")
-    parentThing = plr.gatheredEntries
-    for name in targetList:
-        for option in parentThing:
-            if option.name == name and type(option) == Option:
-                parentThing = option.thing
-                break
-    parentThing.append(entry)
-    createLogbookPage()
-
-
-def removeEntry(entry, target="/"):
-    targetList = target.split("/")
-    parentThing = plr.gatheredEntries
-    for name in targetList:
-        for option in parentThing:
-            if option.name == name:
-                parentThing = option.thing
-                break
-    parentThing.remove(entry)
-    createLogbookPage()
-
-
-def changeName(target, tabFrame, infoFrame):
-    newName = (tkinter.simpledialog.askstring("Change Name", "Please enter the new name"))
-    if newName:
-        target.name = newName
-    updateLogbookInfo(tabFrame, infoFrame, target)
-    updateLogbookTabs(tabFrame, infoFrame)
-
-
-def changePath(entry):
-    newPath = tkinter.simpledialog.askstring("New Path", "Please enter the new name. (Use '/' to separate folders.)")
-    if newPath:
-        removeEntry(entry, entry.path)
-        addEntry(entry, newPath)
-
-
-def editText(textBox, frame, button, textObj):
-    textBox.configure(state="normal")
-    button.setImage("saveIcon.png")
-    button.configure(command=lambda: saveText(textBox, frame, button, textObj))
-
-
-def saveText(textBox, frame, button, textObj):
-    textObj.content = textBox.get("1.0", "end-1c")
-    textBox.configure(state="disabled")
-    bindTabs()
-    button.configure(command=lambda: editText(textBox, frame, button, textObj))
-    button.setImage("editIcon.png")
 
 
 #   Win and Lose placeholder functions
@@ -525,9 +373,9 @@ def debug():
     plr.movementSpeed = 5
     plr.maxHP = 999
     plr.hp = plr.maxHP
-    plr.runeInv.append(RUNES[30])
     plr.currentRoom.chestContents.append(random.choice(list(WEAPONS.values())))
     plr.currentRoom.chestContents.append(random.choice(list(RUNES.values())))
+    plr.currentRoom.chestContents.append(RUNES[31])
     plr.currentRoom.chestContents.append(POTIONS[28])
 
 
@@ -536,11 +384,11 @@ def main():
     bindMain()
     updateInventoryPage()
     updateCharacterPage()
-    createLogbookPage()
+    createLogbookPage(logbookPage, plr)
     describeRoom()
     w.wait_window()
 
 
 plr = Player()
-debug()
+#  debug()
 main()

@@ -10,7 +10,8 @@ def uselessSpell(args):
 def spell_1(args):
     plr = args["fight"].plr
     plr.changeHealth(-1)
-    return f"Your fingers are numb and you take 1 damage. You now have {plr.hp} hp left."
+    return f"The rune slowly grows colder until you are forced to drop it. As soon as you stop touching it, the rune's glow fades out. " \
+           f"Your fingertips are covered in frost and completely numb. You take 1 damage. You now have {plr.hp} hp left."
 
 
 def spell_2(args):
