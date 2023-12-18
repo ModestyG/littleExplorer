@@ -4,25 +4,32 @@ from tkinter import ttk
 from PIL import ImageTk, Image
 
 
-class Button(ttk.Button):
-    def __init__(self, text, command, parent):
-        kwargs = {
-            "text": text,
-            "command": command
-        }
+class Canvas(tk.Canvas):
+    def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
+        self.bind('<Enter>', self._bound_to_mousewheel)
+        self.bind('<Leave>', self._unbound_to_mousewheel)
+
+    def _bound_to_mousewheel(self, event):
+        self.bind_all("<MouseWheel>", self._on_mousewheel)
+
+    def _unbound_to_mousewheel(self, event):
+        self.unbind_all("<MouseWheel>")
+
+    def _on_mousewheel(self, event):
+        self.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+
+class Button(ttk.Button):
+    def __init__(self, text, command, parent, **kwargs):
+        super().__init__(parent, text=text, command=command, **kwargs)
 
 
 class Label(ttk.Label):
     wraplength = 450
 
-    def __init__(self, parent, text, justify=tk.CENTER):
-        kwargs = {
-            "text": text,
-            "justify": justify,
-            "wraplength": self.wraplength,
-        }
-        super().__init__(parent, **kwargs)
+    def __init__(self, parent, text, justify=tk.CENTER, **kwargs):
+        super().__init__(parent, text=text, justify=justify, wraplength=self.wraplength, **kwargs)
 
 
 class NotebookPage(ttk.Frame):
@@ -34,16 +41,30 @@ class NotebookPage(ttk.Frame):
         super().__init__(parent, **kwargs)
 
 
-class RuneSlotImage(ttk.Button):
-    def __init__(self, parent, command, image="placeholder.png", dimensions=(150, 200)):
+class ImageButton(tk.Button):
+    def __init__(self, parent, command, image="placeholder.png", dimensions=(20, 20), **kwargs):
+        self.dimensions = dimensions
         img = Image.open(image)
         photo = ImageTk.PhotoImage(img.resize(dimensions))
         self.image = photo
-        kwargs = {
-            "command": command,
-            "image": photo
-        }
-        super().__init__(parent, **kwargs)
+        super().__init__(parent, command=command, image=photo, **kwargs)
+
+    def setImage(self, image, dimensions=None):
+        if dimensions is None:
+            dimensions = self.dimensions
+        img = Image.open(image)
+        photo = ImageTk.PhotoImage(img.resize(dimensions))
+        self.configure(image=photo)
+        self.image = photo
+
+
+class RuneSlotImage(ImageButton):
+    def __init__(self, parent, command, image="placeholder.png", dimensions=(150, 200), **kwargs):
+        super().__init__(parent, command, image, dimensions, **kwargs)
+
+
+def onFrameConfigure(canvas):  # Update canvas to match frame
+    canvas.configure(scrollregion=canvas.bbox("all"))
 
 
 def createGameWindow():

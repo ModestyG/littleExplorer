@@ -1,3 +1,4 @@
+import random
 from math import sqrt
 
 
@@ -45,6 +46,20 @@ class Vector2:
     def set(self, x, y):
         self.x = x
         self.y = y
+
+
+class BiDict(dict):
+    def __init__(self, content):
+        super().__init__(content)
+
+    def invert(self):
+        return {v: k for k, v in self.items()}
+
+    def getList(self):
+        return list(self.invert().keys())
+
+    def getRandomItem(self):
+        return random.choice(self.getList())
 
 
 def getOrientation(var1, var2):  # Returns 1, 0, or -1

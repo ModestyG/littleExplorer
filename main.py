@@ -6,18 +6,25 @@ from copy import deepcopy
 import fight
 import resources
 from gameClasses import *
-from miscFunctions import Vector2
+from logManager import entryExists, addEntry, createLogbookPage
+from miscFunctions import Vector2, BiDict
 from tkManager import *
 
 #   Import resources
 ENEMIES = resources.ENEMIES
+
 WEAPONS = resources.WEAPONS
+
 ROOM_DESCRIPTIONS = resources.ROOM_DESCRIPTIONS
+
 RUNES = resources.RUNES
+
 POTIONS = resources.POTIONS
+
 SPELLS = resources.SPELLS
 
-ITEMS = WEAPONS + RUNES[1:] + POTIONS
+ITEMS = BiDict({**WEAPONS, **RUNES, **POTIONS})
+del ITEMS[30]  # Removes empty rune from list of items you can get in chests.
 
 #   Setup game UI
 w = createGameWindow()
@@ -27,21 +34,21 @@ mainPage = createNotebookPage(notebook, " Main ")
 characterPage = createNotebookPage(notebook, " Character ")
 inventoryPage = createNotebookPage(notebook, " Inventory ")
 magicPage = createNotebookPage(notebook, " Magic ")
+logbookPage = createNotebookPage(notebook, " Logbook ")
 
-#   Setup magic
-runeSlots = [RUNES[0], RUNES[0], RUNES[0]]
+runeSlots = [RUNES[30], RUNES[30], RUNES[30]]
 
 
 class Player:
-    def __init__(self, strength=1, lv=1, name="", maxHP=10):
+    def __init__(self, strength=0, lv=1, name="", maxHP=10):
         self.hp = maxHP
         self.strength = strength
         self.lv = lv
         self.inv = []
         self.runeInv = []
         self.invSize = 5
-        self.weapon = Weapon("Hand-wraps", 0, "", 0, 1, "Flimsy bandages that protect your fists while boxing. Not very "
-                                                        "useful.")
+        self.weapon = Weapon("Hand-wraps", 0, 1, "", 0, 1, "Flimsy bandages that protect your fists while boxing. Not very "
+                                                           "useful.")
         self.name = name
         self.maxHP = maxHP
         self.hasChestOpen = False
@@ -53,9 +60,17 @@ class Player:
 
         self.actions = 0
         self.movement = self.movementSpeed
-        self.runeSlots = [RUNES[0], RUNES[0], RUNES[0]]
+        self.runeSlots = [RUNES[30], RUNES[30], RUNES[30]]
 
         self.levelingSpeed = 2
+
+        self.gatheredEntries = [Option([], "Monsters"), Option([Option([], "Weapons"), Option([], "Potions"), Option([], "Runes")],
+                                                               "Items"), Option([], "Spells")]
+        self.reachBoost = 0
+
+        self.bindFuncs = [bindTabs, unbindTabs]
+        #  Borde denna ligga här? Absolut inte men det är alldeles för sent på natten för att jag
+        #  ska orka bry mig så konstiga funktioner som inte har någonting med spelaren att göra får hamna i spelar objektet. Fight me.
 
     def changeHealth(self, amount):
         self.hp += amount
@@ -74,6 +89,7 @@ class Player:
 # Room functions
 
 def describeRoom():
+    w.bind("<Control-f>", "break")
     bindMain()
     updateMagicPage()
     clear(mainPage)
@@ -86,7 +102,7 @@ def describeRoom():
 
 def buildRoom():
     unbindMain()
-    room = Room(desc=ROOM_DESCRIPTIONS[random.randint(0, len(ROOM_DESCRIPTIONS) - 1)])
+    room = Room(desc=ROOM_DESCRIPTIONS[random.randint(1, len(ROOM_DESCRIPTIONS))])
     room.width = random.randint(3, 15)
     room.height = random.randint(5, 15)
     summonEnemy(room)
@@ -101,19 +117,21 @@ def buildRoom():
         clear(magicPage)
         Label(magicPage, "Cannot experiment while in battle.").grid()
         backButton = ("Continue", describeRoom)
-        fight.main(w, mainPage, backButton, plr)
+        fight.main(w, mainPage, backButton, plr, logbookPage)
 
 
 # Fight functions
 
 def summonEnemy(room):
     weights = []
-    for enemy in ENEMIES:
+    for enemy in ENEMIES.invert():
         weight = 100 / ((enemy.cr - plr.lv) ** 2 + 1)
         if enemy.cr > plr.lv:
             weight /= 2
         weights.append(weight)
-    room.enemy = deepcopy(*random.choices(ENEMIES, weights))
+    room.enemy = deepcopy(*random.choices(ENEMIES.getList(), weights))
+    if not entryExists(ENEMIES[room.enemy.id], plr):
+        addEntry(ENEMIES[room.enemy.id], plr, logbookPage, "Monsters")
 
 
 def encounterTrap():
@@ -128,7 +146,7 @@ def encounterTrap():
 def fillChest(room):
     points = plr.lv
     while points >= 2:
-        item = ITEMS[random.randint(0, len(ITEMS) - 1)]
+        item = ITEMS.getRandomItem()
         if item.ir <= points:
             points -= item.ir
             room.chestContents.append(item)
@@ -154,6 +172,13 @@ def takeAll():
 
 
 def takeItem(item):
+    if not entryExists(item, plr):
+        if type(item) == Potion:
+            addEntry(item, plr, logbookPage, "Items/Potions")
+        elif type(item) == Weapon:
+            addEntry(item, plr, logbookPage, "Items/Weapons")
+        elif type(item) == Rune:
+            addEntry(item, plr, logbookPage, "Items/Runes")
     if plr.invSize > len(plr.inv):
         if type(item) == Rune:
             plr.runeInv.append(item)
@@ -215,7 +240,6 @@ def updateCharacterPage():
     Label(characterPage, f"""
             {plr.name}
     ---------------------------
-    Level:     {plr.lv}
     Weapon: {plr.weapon.name} (+{plr.weapon.strBonus})
     Hp:         {plr.hp}/{plr.maxHP}
     Str:        {plr.strength}
@@ -248,31 +272,39 @@ def updateMagicPage():
                                                                                                        columnspan=len(runeSlots))
 
 
+# Magic functions
 def activateExperiment():
     runeSlotIds = ""
     for rune in runeSlots:
-        if rune != RUNES[0]:
+        if rune != RUNES[30]:
             runeSlotIds += str(rune.id) + ";"
     try:
-        outcome = SPELLS[runeSlotIds].desc
+        spell = SPELLS[runeSlotIds]
+        title = spell.name
+        outcome = spell.desc
+        spell.hasExperimented = True
+        if not entryExists(spell, plr):
+            addEntry(spell, plr, logbookPage, "Spells")
     except KeyError:
         outcome = "The runes glow for a second before the power fizzles out with a slight hissing sound."
+        title = "Fail"
 
     clear(magicPage)
+    Label(magicPage, title).grid()
     Label(magicPage, outcome).grid()
     Button("Continue", updateMagicPage, magicPage).grid()
 
 
 def addRune(rune):
     for i in range(len(runeSlots)):
-        if not runeSlots[i].id:
+        if runeSlots[i].id == 30:
             runeSlots[i] = rune
             break
     updateMagicPage()
 
 
 def removeRune(index):
-    runeSlots[index] = RUNES[0]
+    runeSlots[index] = RUNES[30]
     updateMagicPage()
 
 
@@ -293,16 +325,28 @@ def win():
 
 
 #   Keybinds
+def bindTabs():
+    w.bind("q", lambda event: notebook.select(mainPage))
+    w.bind("w", lambda event: notebook.select(characterPage))
+    w.bind("c", lambda event: notebook.select(characterPage))
+    w.bind("e", lambda event: notebook.select(inventoryPage))
+    w.bind("i", lambda event: notebook.select(inventoryPage))
+    w.bind("r", lambda event: notebook.select(magicPage))
+    w.bind("m", lambda event: notebook.select(magicPage))
+    w.bind("t", lambda event: notebook.select(logbookPage))
+    w.bind("l", lambda event: notebook.select(logbookPage))
 
-def keyPressed(e):
-    if e.char == "q":
-        notebook.select(mainPage)
-    elif e.char == "w" or e.char == "c":
-        notebook.select(characterPage)
-    elif e.char == "e" or e.char == "i":
-        notebook.select(inventoryPage)
-    elif e.char == "r" or e.char == "m":
-        notebook.select(magicPage)
+
+def unbindTabs():
+    w.bind("q", "break")
+    w.bind("w", "break")
+    w.bind("c", "break")
+    w.bind("e", "break")
+    w.bind("i", "break")
+    w.bind("r", "break")
+    w.bind("m", "break")
+    w.bind("t", "break")
+    w.bind("l", "break")
 
 
 def bindMain():
@@ -324,26 +368,27 @@ def unbindMain():
 #   Start
 
 def debug():
-    plr.weapon = Weapon("Ultra Mega Cheater Sword", strBonus=999, article="a", reach=8,
+    plr.weapon = Weapon("Ultra Mega Cheater Sword", 666, strBonus=999, article="a", reach=8,
                         desc="This sword is only to be wielded by cheaters and debuggers")
     plr.movementSpeed = 5
     plr.maxHP = 999
     plr.hp = plr.maxHP
-    plr.runeInv.append(RUNES[2])
-    plr.currentRoom.chestContents.append(WEAPONS[random.randint(0, len(WEAPONS) - 1)])
-    plr.currentRoom.chestContents.append(RUNES[random.randint(1, len(RUNES) - 1)])
-    plr.currentRoom.chestContents.append(POTIONS[4])
+    plr.currentRoom.chestContents.append(random.choice(list(WEAPONS.values())))
+    plr.currentRoom.chestContents.append(random.choice(list(RUNES.values())))
+    plr.currentRoom.chestContents.append(RUNES[31])
+    plr.currentRoom.chestContents.append(POTIONS[28])
 
 
 def main():
-    w.bind("<Key>", keyPressed)
+    bindTabs()
     bindMain()
     updateInventoryPage()
     updateCharacterPage()
+    createLogbookPage(logbookPage, plr)
     describeRoom()
     w.wait_window()
 
 
 plr = Player()
-# debug()
+#  debug()
 main()
