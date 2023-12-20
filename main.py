@@ -4,6 +4,7 @@ import random
 import shelve
 from copy import deepcopy
 from tkinter import filedialog
+from tkinter import simpledialog
 
 import numpy
 
@@ -316,11 +317,6 @@ def removeRune(index):
     updateMagicPage()
 
 
-#   Main menu
-
-def createIntroScreen():
-
-
 #   Win and Lose placeholder functions
 
 def gameOver():
@@ -349,7 +345,7 @@ def win():
     Label(w, text="You Win!").grid()
 
 
-#   Keybinds
+#   Keybindings
 def bindTabs():
     w.bind("q", lambda event: notebook.select(mainPage))
     w.bind("w", lambda event: notebook.select(characterPage))
@@ -392,6 +388,35 @@ def unbindMain():
 
 #   Start
 
+def main():
+    bindTabs()
+    bindMain()
+    createMainMenu()
+    w.wait_window()
+
+
+def createMainMenu():
+    frame = tk.Frame(w)
+    frame.grid()
+    tk.Label(frame, text="Little Explorer", font=tk.font.Font(size=22)).grid()
+    tk.Button(frame, text="New Game", command=lambda: [frame.destroy(), selectName(), startGame()], font=tk.font.Font(size=13)).grid()
+    tk.Button(frame, text="Load Game", command=lambda: [frame.destroy(), load()], font=tk.font.Font(size=13)).grid()
+    tk.Button(frame, text="Run Debug", command=lambda: [frame.destroy(), debug()], font=tk.font.Font(size=13)).grid()
+
+
+def startGame():
+    updateInventoryPage()
+    updateCharacterPage()
+    createLogbookPage(logbookPage, plr)
+    describeRoom()
+
+
+def selectName():
+    plr.name = simpledialog.askstring("New Game", "Please enter your hero's name:")
+    if not plr.name:
+        selectName()
+
+
 def debug():
     plr.weapon = Weapon("Ultra Mega Cheater Sword", 666, strBonus=999, article="a", reach=8,
                         desc="This sword is only to be wielded by cheaters and debuggers")
@@ -404,18 +429,10 @@ def debug():
     plr.currentRoom.chestContents.append(POTIONS[28])
 
 
-def main():
-    bindTabs()
-    bindMain()
-    updateInventoryPage()
-    updateCharacterPage()
-    createLogbookPage(logbookPage, plr)
-    describeRoom()
-    w.wait_window()
-
-
 def save():
-    saveDir = filedialog.asksaveasfilename(filetypes=[("All files", "*.*")], initialdir="saves")
+    saveDir = filedialog.askdirectory(initialdir="saves")
+    if not saveDir:
+        return
     if not os.path.exists(saveDir):
         os.mkdir(saveDir)
     shelfFile = shelve.open(saveDir + "/" + saveDir.split("/")[-1])
@@ -447,11 +464,9 @@ def load():
         del ITEMS[30]
         shelfFile.close()
     except PermissionError:
-        print("New Save")
         pass
-    main()
+    startGame()
 
 
 plr = Player()
-load()
-# debug()
+main()
