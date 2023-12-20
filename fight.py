@@ -58,6 +58,9 @@ class Fight:
         w.bind("<Control-e>", "break")
         w.bind("<space>", "break")
 
+        if not self.plr.isAlive:
+            self.state = "gameOver"
+
         if newState is not None and self.state != "gameOver":
             self.state = newState
         state = self.state
@@ -112,7 +115,7 @@ class Fight:
             Button(*self.backButtonArgs).grid()
             self.plr.pos = Vector2(None, None)
         elif state == "gameOver":
-            Label(self.frame, "Game Over!").grid()
+            pass
         else:
             error(f"Error: Battle state ({state}) does not exist")
         if self.temporaryFrame is not None:
@@ -370,7 +373,6 @@ def getCellsInReach(fight, reach, startPos, requirement=""):
 
 
 def cancelMove(fight, cellsInReach):
-    plr = fight.plr
     fight.updateActionButtons("playerTurn")
     fight.w.bind("<Left>", "break")
     fight.w.bind("<Right>", "break")
@@ -413,7 +415,6 @@ def moveTowardsPlayer(fight, targetPos):
 
 def moveEnemy(fight, pos):
     enemy = fight.enemy
-    grid = fight.grid
     enemy.pos = pos
     fight.getCell(pos).setColor("green")
     fight.getCell(pos).states["walkable"] = False

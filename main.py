@@ -1,7 +1,11 @@
 # Adventure game about a travelling artificer
-
+import os.path
 import random
+import shelve
 from copy import deepcopy
+from tkinter import filedialog
+
+import numpy
 
 import fight
 import resources
@@ -40,8 +44,8 @@ runeSlots = [RUNES[30], RUNES[30], RUNES[30]]
 
 
 class Player:
-    def __init__(self, strength=0, lv=1, name="", maxHP=10):
-        self.hp = maxHP
+    def __init__(self, strength=0, lv=1, name="", maxHP=30):
+        self.hp = 10
         self.strength = strength
         self.lv = lv
         self.inv = []
@@ -52,18 +56,19 @@ class Player:
         self.name = name
         self.maxHP = maxHP
         self.hasChestOpen = False
-        self.currentRoom = Room("Starting Room")
+        self.currentRoom = Room("Welcome to the Little Explorer! Chances are you are going to die pretty quickly considering you just "
+                                "started and are already bleeding out (hp: 10/30). Good luck finding a health potion!")
         self.actionsPerTurn = 1
         self.movementSpeed = 3.5
         self.pos = Vector2(None, None)
         self.effects = []
+        self.isAlive = True
 
         self.actions = 0
         self.movement = self.movementSpeed
         self.runeSlots = [RUNES[30], RUNES[30], RUNES[30]]
 
         self.levelingSpeed = 2
-
         self.gatheredEntries = [Option([], "Monsters"), Option([Option([], "Weapons"), Option([], "Potions"), Option([], "Runes")],
                                                                "Items"), Option([], "Spells")]
         self.reachBoost = 0
@@ -73,9 +78,10 @@ class Player:
         #  ska orka bry mig så konstiga funktioner som inte har någonting med spelaren att göra får hamna i spelar objektet. Fight me.
 
     def changeHealth(self, amount):
-        self.hp += amount
+        self.hp = numpy.clip(self.hp + amount, 0, self.maxHP)
         updateCharacterPage()
         if self.hp <= 0:
+            self.isAlive = False
             gameOver()
 
     def setMovement(self, amount):
@@ -244,6 +250,8 @@ def updateCharacterPage():
     Hp:         {plr.hp}/{plr.maxHP}
     Str:        {plr.strength}
 """, justify=tk.LEFT).grid()
+    Button("Save", lambda: save(), characterPage).grid()
+    Button("Load", lambda: load(), characterPage).grid()
 
 
 def updateInventoryPage():
@@ -308,13 +316,30 @@ def removeRune(index):
     updateMagicPage()
 
 
+#   Main menu
+
+def createIntroScreen():
+
+
 #   Win and Lose placeholder functions
 
 def gameOver():
     notebook.hide(mainPage)
     notebook.hide(characterPage)
     notebook.hide(inventoryPage)
+    notebook.hide(magicPage)
+    notebook.hide(logbookPage)
+    unbindMain()
+    unbindTabs()
+    w.bind("<Control-a>", "break")
+    w.bind("<Control-q>", "break")
+    w.bind("<Control-w>", "break")
+    w.bind("<Control-m>", "break")
+    w.bind("<Control-e>", "break")
+    w.bind("<space>", "break")
     Label(notebook, text="Game Over").grid()
+    Label(notebook, text=f"You reached level {plr.lv} with the leveling speed of {plr.levelingSpeed}.").grid()
+    Label(notebook, text="Please reload the game to play again!").grid()
 
 
 def win():
@@ -389,6 +414,44 @@ def main():
     w.wait_window()
 
 
+def save():
+    saveDir = filedialog.asksaveasfilename(filetypes=[("All files", "*.*")], initialdir="saves")
+    if not os.path.exists(saveDir):
+        os.mkdir(saveDir)
+    shelfFile = shelve.open(saveDir + "/" + saveDir.split("/")[-1])
+    shelfFile["plr"] = plr
+    shelfFile["enemies"] = resources.ENEMIES
+    shelfFile["weapons"] = resources.WEAPONS
+    shelfFile["room_descriptions"] = resources.ROOM_DESCRIPTIONS
+    shelfFile["runes"] = resources.RUNES
+    shelfFile["potions"] = resources.POTIONS
+    shelfFile["spells"] = resources.SPELLS
+    shelfFile.close()
+
+
+def load():
+    global plr
+    try:
+        saveDir = filedialog.askdirectory(title="Select a File", initialdir="saves")
+        shelfFile = shelve.open(saveDir + "/" + saveDir.split("/")[-1])  # Saves in saveDirectory/saveName so that a folder is created
+        # that contains all three files for the save in order to remove confusion if players decide to edit save files on their own.
+        plr = shelfFile["plr"]
+        resources.ENEMIES = shelfFile["enemies"]
+        resources.WEAPONS = shelfFile["weapons"]
+        resources.ROOM_DESCRIPTIONS = shelfFile["room_descriptions"]
+        resources.RUNES = shelfFile["runes"]
+        resources.POTIONS = shelfFile["potions"]
+        resources.SPELLS = shelfFile["spells"]
+        ITEMS.clear()
+        ITEMS.update({**WEAPONS, **RUNES, **POTIONS})
+        del ITEMS[30]
+        shelfFile.close()
+    except PermissionError:
+        print("New Save")
+        pass
+    main()
+
+
 plr = Player()
-#  debug()
-main()
+load()
+# debug()
